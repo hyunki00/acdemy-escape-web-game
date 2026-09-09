@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>개발 일지 — 바이미디어 아카데미: 이스케이프</title>
+<style>
+  :root{
+    --navy:#1B2A41;
+    --burgundy:#6b1f2e;
+    --slate:#3e5c76;
+    --bg:#faf9f7;
+    --card-bg:#ffffff;
+    --border:#e6e2db;
+    --text:#22201d;
+    --muted:#7a756c;
+    --font: -apple-system, 'Segoe UI', 'Malgun Gothic', sans-serif;
+    --font-mono:'SF Mono', Consolas, monospace;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; background:var(--bg); color:var(--text); font-family:var(--font);
+    padding:48px 20px 80px;
+  }
+  .page{ max-width:760px; margin:0 auto; }
+
+  header{ margin-bottom:44px; }
+  .kicker{ font-size:0.75rem; letter-spacing:3px; color:var(--muted); text-transform:uppercase; margin-bottom:10px; }
+  h1{ font-size:2rem; font-weight:900; color:var(--navy); margin:0 0 8px; letter-spacing:-0.5px; }
+  .sub{ color:var(--muted); font-size:0.92rem; line-height:1.6; max-width:560px; }
+
+  .entry{
+    background:var(--card-bg); border:1px solid var(--border); border-radius:12px;
+    padding:28px 30px; margin-bottom:26px; box-shadow:0 2px 10px rgba(0,0,0,0.03);
+  }
+  .date-badge{
+    display:inline-block; background:var(--navy); color:#fff; font-family:var(--font-mono);
+    font-size:0.78rem; font-weight:700; padding:4px 12px; border-radius:20px; margin-bottom:18px;
+    letter-spacing:0.5px;
+  }
+  .task{ margin-bottom:26px; }
+  .task:last-child{ margin-bottom:0; }
+  .task-title{
+    font-size:1.05rem; font-weight:800; color:var(--text); margin:0 0 14px;
+    padding-bottom:8px; border-bottom:2px solid var(--border);
+  }
+  .task-title .num{ color:var(--slate); margin-right:6px; }
+
+  .block{ margin-bottom:14px; }
+  .block:last-child{ margin-bottom:0; }
+  .label-row{ display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .label{
+    font-family:var(--font-mono); font-size:0.72rem; font-weight:800; letter-spacing:1.5px;
+    padding:2px 10px; border-radius:4px; color:#fff;
+  }
+  .label.how{ background:var(--slate); }
+  .label.why{ background:var(--burgundy); }
+  .block p{ margin:0; font-size:0.92rem; line-height:1.7; color:var(--text); padding-left:2px; }
+  .block p b, .block p strong{ color:var(--navy); }
+
+  table{ width:100%; border-collapse:collapse; margin:10px 0 4px; font-size:0.86rem; }
+  th{ background:var(--navy); color:#fff; text-align:left; padding:8px 12px; font-weight:700; }
+  td{ padding:8px 12px; border-bottom:1px solid var(--border); }
+  tr:last-child td{ border-bottom:none; }
+  td.file{ font-family:var(--font-mono); color:var(--burgundy); font-weight:700; white-space:nowrap; }
+
+  .template{
+    margin-top:40px; border:1.5px dashed var(--border); border-radius:12px; padding:24px 28px;
+    color:var(--muted); font-size:0.86rem; line-height:1.7;
+  }
+  .template h3{ color:var(--muted); font-size:0.9rem; margin:0 0 10px; }
+  .template code{
+    display:block; white-space:pre-wrap; background:#f2f0eb; padding:14px 16px; border-radius:8px;
+    font-family:var(--font-mono); font-size:0.78rem; color:#4a463f; margin-top:8px;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div class="kicker">Development Log</div>
+    <h1>개발 일지 — 바이미디어 아카데미: 이스케이프</h1>
+    <p class="sub">프로젝트 진행 과정을 날짜별로 기록합니다. 무엇을 했는지뿐 아니라 <b>How</b>(어떻게 했는지)와 <b>Why</b>(왜 그렇게 했는지)를 함께 남겨서, 나중에 포트폴리오나 이력서에서 설계 의도를 바로 설명할 수 있도록 합니다.</p>
+  </header>
+
+  <div class="entry">
+    <div class="date-badge">2026-09-09</div>
+
+    <div class="task">
+      <h3 class="task-title"><span class="num">01</span>기획서(포트폴리오용) 작성</h3>
+
+      <div class="block">
+        <div class="label-row"><span class="label how">HOW</span></div>
+        <p>프로젝트 이름, 개요, 게임 구조(상태 관리 · 장면 렌더링 · 인터랙션 · 퍼즐 · 잠금·코드 조합 · 내비게이션 · 엔딩 7개 시스템)를 <b>"구성 → 작동 방식"</b> 형식으로 정리한 기획서를 Word 문서로 작성. 이후 그래픽 자산 파이프라인(실사 촬영 → AI 이미지 생성 → Photoshop 보정)과 오디오 자산 계획(BGM: 생성형 AI, SE: 저작권 없는 무료 음원) 섹션을 추가로 보강함.</p>
+      </div>
+      <div class="block">
+        <div class="label-row"><span class="label why">WHY</span></div>
+        <p>프로젝트가 진행되는 동안 방향을 잃지 않도록, 개발에 본격적으로 들어가기 전에 스스로 <b>"무엇을 만들 것인지 · 어떤 구조로 만들 것인지"</b>를 먼저 명확히 정의해두기 위함. 미리 정리해두면 이후 기능을 추가하거나 수정할 때마다 전체 방향과 어긋나는지 바로 판단할 수 있고, 완성 후에는 포트폴리오 문서로도 바로 활용할 수 있음.</p>
+      </div>
+    </div>
+
+    <div class="task">
+      <h3 class="task-title"><span class="num">02</span>게임 스크립트 파일을 역할별로 분리</h3>
+
+      <div class="block">
+        <div class="label-row"><span class="label how">HOW</span></div>
+        <p>하나의 HTML 파일 안에 인라인으로 들어있던 자바스크립트 전체(약 670줄)를 아래 8개 파일로 분리함.</p>
+        <table>
+          <tr><th>파일</th><th>역할</th></tr>
+          <tr><td class="file">data.js</td><td>상태(state) + 퍼즐 · 잠금 · 방 데이터</td></tr>
+          <tr><td class="file">draw.js</td><td>SVG 배경 · 사물 드로잉 함수</td></tr>
+          <tr><td class="file">ui.js</td><td>모달 열고 닫기 등 공통 UI</td></tr>
+          <tr><td class="file">puzzle.js</td><td>퀴즈(퍼즐) 출제 · 채점</td></tr>
+          <tr><td class="file">lock.js</td><td>잠금 · 키패드 · 전원/호출 처리</td></tr>
+          <tr><td class="file">inventory.js</td><td>아이템 획득 · 보유 확인</td></tr>
+          <tr><td class="file">navigation.js</td><td>클릭 이벤트 위임, 방 이동, 화면 렌더링</td></tr>
+          <tr><td class="file">main.js</td><td>타이머 · 설정 · 재시작 · 엔딩, 게임 시작 진입점</td></tr>
+        </table>
+      </div>
+      <div class="block">
+        <div class="label-row"><span class="label why">WHY</span></div>
+        <p>코드가 한 파일에 다 몰려 있으면 특정 기능(퀴즈, 이동, 아이템 처리 등)을 고치려 할 때마다 670줄 전체를 스크롤하며 찾아야 해서 관리가 점점 어려워짐. 개발자로서 코드를 역할별로 구분해두면, 특정 기능을 수정할 때 해당 파일만 열어보면 되고, 앞으로 기능이 늘어나도 구조가 흐트러지지 않아 유지보수가 쉬워짐. 이번 분리로 <b>코드의 구분과 관리, 보수의 용이성</b>을 확보하는 것이 목적.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="template">
+    <h3>다음 기록을 추가할 때는</h3>
+    아래 <code>.entry</code> 블록을 복사해서 이 위쪽(최신순)에 붙여넣고, 날짜와 내용만 바꾸면 돼요.
+    <code>&lt;div class="entry"&gt;
+  &lt;div class="date-badge"&gt;YYYY-MM-DD&lt;/div&gt;
+  &lt;div class="task"&gt;
+    &lt;h3 class="task-title"&gt;&lt;span class="num"&gt;01&lt;/span&gt;작업 제목&lt;/h3&gt;
+    &lt;div class="block"&gt;
+      &lt;div class="label-row"&gt;&lt;span class="label how"&gt;HOW&lt;/span&gt;&lt;/div&gt;
+      &lt;p&gt;무엇을 어떻게 했는지&lt;/p&gt;
+    &lt;/div&gt;
+    &lt;div class="block"&gt;
+      &lt;div class="label-row"&gt;&lt;span class="label why"&gt;WHY&lt;/span&gt;&lt;/div&gt;
+      &lt;p&gt;왜 그렇게 했는지&lt;/p&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code>
+  </div>
+
+</div>
+</body>
+</html>

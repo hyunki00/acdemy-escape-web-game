@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>학원 탈출 게임 - 포인트앤클릭 프로토타입</title>
+<style>
+  :root{
+    --navy:#1b2a41;
+    --navy-deep:#131f30;
+    --slate:#3e5c76;
+    --slate-lt:#eff3f7;
+    --amber:#b23a52;
+    --amber-lt:#fbe8c8;
+    --amber-dark:#8a5a12;
+    --white:#ffffff;
+    --text-dark:#1b2a41;
+    --text-muted:#5f6b7a;
+    --danger:#a5424a;
+    --font-head: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+    --font-body: 'Segoe UI', system-ui, sans-serif;
+    --font-mono: 'SF Mono', Consolas, 'Courier New', monospace;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; min-height:100vh;
+    background: radial-gradient(ellipse at 50% -10%, rgba(242,165,65,0.08), transparent 55%), var(--navy-deep);
+    color:var(--text-dark);
+    font-family:var(--font-body);
+    display:flex; align-items:center; justify-content:center;
+    padding:16px;
+  }
+
+  #frame{
+    width:min(1440px, 94vw);
+    max-height:94vh;
+    background:var(--white);
+    border-radius:16px;
+    overflow:hidden;
+    box-shadow:0 30px 70px rgba(0,0,0,0.55);
+    display:flex; flex-direction:column;
+  }
+
+  /* ---------- 상단 바 ---------- */
+  #topbar{
+    background:var(--navy); color:var(--white);
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 14px; flex-shrink:0;
+  }
+  #topbar .logo{ font-family:var(--font-head); font-weight:bold; font-size:1rem; }
+  #topbar .logo small{ display:block; font-family:var(--font-body); font-size:0.55rem; letter-spacing:1.5px; color:var(--amber); }
+  #timer{ font-family:var(--font-mono); font-size:0.95rem; color:var(--amber); }
+  #settingsBtn{ background:none; border:none; color:var(--white); font-size:1.1rem; cursor:pointer; padding:4px 6px; }
+
+  /* ---------- 캡션 (방 이름) ---------- */
+  #captionBar{
+    background:var(--slate-lt); padding:10px 14px 6px; flex-shrink:0;
+  }
+  #roomTitle{ font-family:var(--font-head); font-size:1.05rem; font-weight:bold; color:var(--navy); margin:0; }
+  #roomDesc{ font-size:0.76rem; color:var(--text-muted); margin:2px 0 0; line-height:1.35; }
+
+  /* ---------- 씬(배경 그림) ---------- */
+  #sceneWrap{
+    position:relative;
+    background:#0d1520;
+    flex:1; min-height:0; overflow:hidden;
+    display:flex;
+  }
+  #sceneArt{ width:100%; height:100%; display:block; }
+  #sceneArt svg{ width:100%; height:100%; display:block; }
+  .hotspot-region{ fill:transparent; stroke:transparent; stroke-width:3; cursor:pointer; transition:fill .15s ease, stroke .15s ease; }
+  .hotspot-region:hover{ fill:rgba(242,165,65,0.16); stroke:rgba(242,165,65,0.85); }
+  .hotspot-region.is-solved{ stroke:rgba(63,138,74,0.55); }
+  .hotspot-region.is-solved:hover{ fill:rgba(63,138,74,0.16); }
+
+  /* ---------- 이미지 기반 씬 (실사 → 게임 그래픽 변환 자산) ---------- */
+  .image-scene{ position:relative; width:100%; height:100%; overflow:hidden; }
+  .image-scene img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .hitbox{
+    position:absolute; cursor:pointer; border-radius:6px;
+    border:2px solid transparent; background:rgba(255,221,51,0);
+    transition: border-color .15s ease, background .15s ease;
+  }
+  .hitbox:hover{ border-color:#ffdd33; background:rgba(255,221,51,0.18); box-shadow:0 0 14px rgba(255,221,51,0.45); }
+  .hitbox.is-solved{ border-color:rgba(120,220,140,0.85); }
+  .hitbox.is-solved:hover{ background:rgba(120,220,140,0.18); }
+  .flicker-overlay{
+    position:absolute; inset:0; pointer-events:none;
+    background: radial-gradient(circle at 50% 22%, rgba(255,50,50,0.38), transparent 55%);
+    mix-blend-mode: screen;
+    animation: flicker 3.4s infinite;
+  }
+  @keyframes flicker{
+    0%, 19%, 21%, 23%, 55%, 57%, 100% { opacity: 0.15; }
+    20%, 22%, 56% { opacity: 0.6; }
+    50% { opacity: 0.25; }
+  }
+
+  /* ---------- 이동(화살표) 오버레이 ---------- */
+  #navOverlay{
+    position:absolute; left:0; right:0; bottom:0;
+    display:none; flex-wrap:wrap; gap:6px;
+    padding:8px; background:linear-gradient(0deg, rgba(0,0,0,0.65), rgba(0,0,0,0));
+  }
+  #navOverlay.show{ display:flex; }
+  .nav-btn{
+    flex:1 1 auto;
+    background:var(--amber); color:var(--navy);
+    border:none; border-radius:7px; padding:8px 9px;
+    font-size:0.74rem; font-weight:bold; cursor:pointer; white-space:nowrap;
+  }
+  .nav-btn.locked{ background:rgba(216,222,230,0.9); color:var(--text-muted); }
+
+  #moveToggleWrap{ padding:10px 14px; background:var(--slate-lt); flex-shrink:0; }
+  #moveToggleBtn{
+    width:100%; background:var(--navy); color:var(--white); border:none; border-radius:10px;
+    padding:10px 0; font-size:0.88rem; font-family:var(--font-body); cursor:pointer;
+  }
+
+  /* ---------- 인벤토리 바 ---------- */
+  #invbar{
+    background:var(--navy); display:flex; align-items:center; gap:8px;
+    padding:9px 14px; min-height:44px; flex-shrink:0;
+  }
+  #invbar .lbl{ font-size:0.62rem; letter-spacing:1.5px; color:var(--amber); text-transform:uppercase; margin-right:4px; }
+  .inv-item{
+    width:30px; height:30px; border-radius:6px;
+    background:linear-gradient(160deg, var(--amber), #d98a1f);
+    display:flex; align-items:center; justify-content:center; font-size:0.95rem;
+  }
+
+  /* ---------- 모달 ---------- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(10,13,20,0.72);
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none; transition:opacity .2s ease; z-index:80; padding:16px;
+  }
+  .overlay.show{ opacity:1; pointer-events:auto; }
+  .modal{
+    background:var(--white); border-radius:14px; padding:22px 20px;
+    width:100%; max-width:400px; max-height:88vh; overflow-y:auto;
+    box-shadow:0 20px 60px rgba(0,0,0,0.5); position:relative;
+  }
+  .modal h3{ font-family:var(--font-head); margin:0 0 4px; font-size:1.05rem; color:var(--navy); }
+  .modal .sub{ font-size:0.75rem; color:var(--text-muted); margin:0 0 12px; }
+  .modal-close{ position:absolute; top:12px; right:12px; background:none; border:none; font-size:1.1rem; color:var(--text-muted); cursor:pointer; }
+  .code-box{
+    background:var(--navy); color:#e8edf3; font-family:var(--font-mono); font-size:0.78rem;
+    border-radius:8px; padding:12px; white-space:pre; overflow-x:auto; line-height:1.6; margin-bottom:12px;
+  }
+  .code-box .blank-input{
+    width:46px; background:var(--amber-lt); color:var(--amber-dark); border:1px solid var(--amber);
+    border-radius:4px; font-family:var(--font-mono); font-size:0.78rem; text-align:center; padding:1px 2px;
+  }
+  .answer-row{ display:flex; gap:8px; margin-bottom:10px; }
+  .answer-row input{ flex:1; font-family:var(--font-mono); font-size:0.95rem; padding:9px 10px; border:1px solid #cfd6de; border-radius:8px; }
+  .btn{ font-family:var(--font-body); background:var(--navy); color:var(--white); border:none; border-radius:8px; padding:9px 16px; font-size:0.85rem; cursor:pointer; }
+  .btn.secondary{ background:var(--slate-lt); color:var(--text-dark); }
+  .feedback{ font-size:0.82rem; margin-top:4px; min-height:1.3em; }
+  .feedback.ok{ color:#2f7a3a; }
+  .feedback.bad{ color:var(--danger); }
+  .checklist{ margin:6px 0 14px; }
+  .checklist li{ font-size:0.82rem; margin-bottom:6px; list-style:none; display:flex; align-items:center; gap:6px; }
+  .checklist .dot{ width:9px; height:9px; border-radius:50%; background:#c7cfd8; flex-shrink:0; }
+  .checklist .dot.on{ background:#3f8a4a; }
+  .keypad-display{ font-family:var(--font-mono); font-size:1.4rem; letter-spacing:6px; text-align:center; background:var(--navy-deep); color:var(--amber); border-radius:8px; padding:10px; margin-bottom:10px; }
+  .keypad-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+  .key{ font-family:var(--font-mono); font-size:0.95rem; background:var(--slate-lt); border:1px solid #dbe2ea; border-radius:6px; padding:10px 0; cursor:pointer; }
+  .key:hover{ background:#e2e8ee; }
+</style>
+</head>
+<body>
+
+<audio id="bgmAudio" src="Sound/bgm.mp3" loop preload="auto"></audio>
+
+<div id="frame">
+  <div id="topbar">
+    <div class="logo">학원 탈출<small>JAVA ESCAPE · POINT & CLICK</small></div>
+    <div id="timer">00:00</div>
+    <button id="settingsBtn" aria-label="설정">⚙</button>
+  </div>
+
+  <div id="captionBar">
+    <h2 id="roomTitle">-</h2>
+    <p id="roomDesc"></p>
+  </div>
+
+  <div id="sceneWrap">
+    <div id="sceneArt"></div>
+    <div id="navOverlay"></div>
+  </div>
+
+  <div id="moveToggleWrap">
+    <button id="moveToggleBtn">🚶 이동</button>
+  </div>
+
+  <div id="invbar">
+    <span class="lbl">소지품</span>
+    <div id="invItems" style="display:flex; gap:8px;"></div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal" id="modalBody"></div>
+</div>
+
+<script src="draw.js"></script>
+<script src="data.js"></script>
+<script src="ui.js"></script>
+<script src="puzzle.js"></script>
+<script src="lock.js"></script>
+<script src="inventory.js"></script>
+<script src="navigation.js"></script>
+<script src="main.js"></script>
+
+</body>
+</html>

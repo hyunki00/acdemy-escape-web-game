@@ -153,6 +153,84 @@
         <p>그래픽 자산보다 먼저 완성 가능한 BGM을 확보해, 이후 이미지 자산이 완성되는 대로 바로 오디오까지 함께 적용할 수 있도록 준비 순서를 앞당김.</p>
       </div>
     </div>
+
+    <div class="task">
+      <h3 class="task-title"><span class="num">03</span>이미지 기반 렌더링 시스템 최초 구현 및 복도 배경 적용</h3>
+
+      <div class="block">
+        <div class="label-row"><span class="label how">HOW</span></div>
+        <p>renderImageScene() 함수를 추가해 SVG 대신 실제 이미지 + 퍼센트 좌표 히트박스로 방을 그릴 수 있는 구조를 만들고, AI로 변환한 복도 이미지를 복도(앞) 방에 처음 적용. 마우스를 올리면 노란 테두리로 하이라이트되는 hover 효과도 함께 구현. 이후 생성 오류가 발견된 이미지를 두 차례 교체본으로 재적용함.</p>
+      </div>
+      <div class="block">
+        <div class="label-row"><span class="label why">WHY</span></div>
+        <p>기획서 3.2에 미리 세워둔 "SVG → 이미지 전환" 계획을 실제로 검증해볼 첫 사례가 필요했음. 클릭 영역이 이미지 위에서도 정상 동작하는지 미리 확인해야 나머지 방들도 같은 방식으로 안심하고 진행할 수 있음.</p>
+      </div>
+    </div>
+
+    <div class="task">
+      <h3 class="task-title"><span class="num">04</span>게임 화면 해상도 확장</h3>
+
+      <div class="block">
+        <div class="label-row"><span class="label how">HOW</span></div>
+        <p>원본 이미지 해상도(2752×1536)를 기준으로 화질이 깨지지 않는 최대 크기를 계산해 게임 프레임을 480px → 1440px로 확장. 이후 화면이 낮은 모니터에서 씬 영역이 프레임 높이를 넘어 이동 버튼과 소지품 바가 잘려서 안 보이는 문제를 발견해, 씬 영역만 유동적으로 줄어들도록 레이아웃 구조를 수정.</p>
+      </div>
+      <div class="block">
+        <div class="label-row"><span class="label why">WHY</span></div>
+        <p>클릭 영역이 좁으면 실제 플레이어가 불편할 거라는 우려와, 원본 이미지 해상도를 다 활용하지 못하고 있다는 점 때문에 확장을 결정함. 화면 크기가 커져도 이동 · 소지품 같은 필수 UI는 항상 보여야 실사용성이 깨지지 않음.</p>
+      </div>
+    </div>
+
+    <div class="task">
+      <h3 class="task-title"><span class="num">05</span>비상등 깜빡임 연출 추가</h3>
+
+      <div class="block">
+        <div class="label-row"><span class="label how">HOW</span></div>
+        <p>이미지 위에 반투명 빨간 방사형 그라디언트를 mix-blend-mode: screen으로 얹고, 3.4초 주기로 불규칙하게 밝기가 변하는 CSS 애니메이션을 구현.</p>
+      </div>
+      <div class="block">
+        <div class="label-row"><span class="label why">WHY</span></div>
+        <p>정전된 야간 학원이라는 설정을 정지 이미지만으로는 다 표현하기 어려워서, 별도 영상 자산 없이 최소한의 코드만으로 분위기를 강화하기 위함. 영상 자산 제작에 비용을 쓰기 전에 저비용 방식으로 먼저 만족스러운지 검증.</p>
+      </div>
+    </div>
+
+    <div class="task">
+      <h3 class="task-title"><span class="num">06</span>BGM 파일 연결 및 재생 확인</h3>
+
+      <div class="block">
+        <div class="label-row"><span class="label how">HOW</span></div>
+        <p>업로드받은 bgm.mp3를 Sound 폴더에 배치하고, 기존에 준비해둔 오디오 재생 로직과 연결해 최초 클릭 시 자동재생되는지, 음소거 버튼이 정상 동작하는지 실제 브라우저에서 확인.</p>
+      </div>
+      <div class="block">
+        <div class="label-row"><span class="label why">WHY</span></div>
+        <p>브라우저는 사용자 상호작용 전 자동재생을 막기 때문에, 실제 파일로 재생 흐름을 검증해야 기능이 완성됐다고 확신할 수 있었음.</p>
+      </div>
+    </div>
+
+    <div class="task">
+      <h3 class="task-title"><span class="num">07</span>테스트용 자유 이동 모드 추가</h3>
+
+      <div class="block">
+        <div class="label-row"><span class="label how">HOW</span></div>
+        <p>DEBUG_FREE_ROAM 플래그를 추가해, 켜두면 퍼즐 클릭이 전부 무시되고 모든 문 · 서랍이 항상 열린 것처럼 처리되도록 분기 처리. 끄면 원래의 정상 플레이 흐름으로 그대로 복귀.</p>
+      </div>
+      <div class="block">
+        <div class="label-row"><span class="label why">WHY</span></div>
+        <p>그래픽 · 레이아웃을 검증하는 단계에서는 매번 퍼즐을 풀며 이동하는 게 비효율적이라, 퍼즐 로직 자체는 건드리지 않고 손쉽게 켜고 끌 수 있는 테스트 우회 경로가 필요했음.</p>
+      </div>
+    </div>
+
+    <div class="task">
+      <h3 class="task-title"><span class="num">08</span>인포데스크 배경 이미지 적용</h3>
+
+      <div class="block">
+        <div class="label-row"><span class="label how">HOW</span></div>
+        <p>변환된 아카데미 프론트(인포데스크) 이미지를 실제 게임에 적용. 방문자 명단 · 서랍 히트박스 위치는 아직 정하지 않아 TODO 주석만 남기고 보류.</p>
+      </div>
+      <div class="block">
+        <div class="label-row"><span class="label why">WHY</span></div>
+        <p>이미지 자산이 완성되는 대로 바로 반영해 시각적 진행 상황을 눈으로 계속 확인하기 위함. 퍼즐 위치 결정에 시간이 걸리더라도 배경 교체 자체를 미룰 필요는 없었음.</p>
+      </div>
+    </div>
   </div>
 
   <div class="template">

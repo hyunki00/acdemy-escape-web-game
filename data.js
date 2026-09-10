@@ -157,13 +157,8 @@ const ROOMS = {
   frontdesk: {
     name: '아카데미 프론트', desc: '안내데스크. 서랍이 잠겨 있다.',
     connections: [ { label: '복도(뒤)', dest: 'hallwayBack' } ],
-    scene(s){
-      return wrapScene(`
-        ${counterDesk(140,210,320)}
-        ${clipboard(220,160,'p_frontdesk', !!s.solved.p_frontdesk)}
-        ${drawerUnit(380,238,'frontdeskDrawer', !!s.unlocked.frontdeskDrawer)}
-      `, '#3a141d');
-    }
+    background: 'img/frontdesk.jpg',
+    hotspots: [] // TODO: 방문자 명단(p_frontdesk), 서랍(frontdeskDrawer) 위치 확정되면 추가
   },
   elevatorFront: {
     name: '엘리베이터 앞',

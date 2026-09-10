@@ -123,6 +123,31 @@
         <p>코드가 한 파일에 다 몰려 있으면 특정 기능(퀴즈, 이동, 아이템 처리 등)을 고치려 할 때마다 670줄 전체를 스크롤하며 찾아야 해서 관리가 점점 어려워짐. 개발자로서 코드를 역할별로 구분해두면, 특정 기능을 수정할 때 해당 파일만 열어보면 되고, 앞으로 기능이 늘어나도 구조가 흐트러지지 않아 유지보수가 쉬워짐. 이번 분리로 <b>코드의 구분과 관리, 보수의 용이성</b>을 확보하는 것이 목적.</p>
       </div>
     </div>
+    <div class="task">
+      <h3 class="task-title"><span class="num">03</span>실제 학원 전개도 기반으로 이동 동선 수정</h3>
+
+      <div class="block">
+        <div class="label-row"><span class="label how">HOW</span></div>
+        <p>사용자가 촬영한 실제 학원 비상대피도(전개도)를 참고해 방 연결 구조를 수정. 스터디실 연결을 복도(앞) → 복도(뒤)로 이동하고, 관련 퍼즐 요소(게시판, 메모, 문)도 함께 복도(뒤) 화면으로 옮김. 본 강의실 설명에 실제 표지판 문구("5강의실")를 반영.</p>
+      </div>
+      <div class="block">
+        <div class="label-row"><span class="label why">WHY</span></div>
+        <p>실제 대피도를 보면 스터디룸은 엘리베이터 · 인포메이션과 같은 위쪽 구역에 있고, 화장실은 반대쪽 아래 구역에 있음. 게임 속 동선이 실제 공간 구조와 어긋나 있으면 몰입감이 떨어지고, 이후 실사 기반 이미지로 전환했을 때 배경과 동선이 맞지 않아 어색해짐. 미리 구조를 맞춰두면 이미지 자산이 들어와도 자연스럽게 연결됨.</p>
+      </div>
+    </div>
+
+    <div class="task">
+      <h3 class="task-title"><span class="num">04</span>오디오 자산 제작 착수 — 기본 BGM 완성</h3>
+
+      <div class="block">
+        <div class="label-row"><span class="label how">HOW</span></div>
+        <p>생성형 AI 음악 도구로 게임 전체에 깔릴 기본 배경음악(BGM)을 제작 완료. 실사 이미지의 게임 그래픽화 작업은 현재 진행 중.</p>
+      </div>
+      <div class="block">
+        <div class="label-row"><span class="label why">WHY</span></div>
+        <p>그래픽 자산보다 먼저 완성 가능한 BGM을 확보해, 이후 이미지 자산이 완성되는 대로 바로 오디오까지 함께 적용할 수 있도록 준비 순서를 앞당김.</p>
+      </div>
+    </div>
   </div>
 
   <div class="template">

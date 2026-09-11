@@ -93,30 +93,31 @@ const LOCKS = {
 const ROOMS = {
   classroom: {
     name: '본 강의실', desc: '5강의실. 야자 중 잠들었던 곳. 문이 잠겨 있다.',
-    connections: [ { label: '복도(앞)', dest: 'hallwayFront', lockId: 'classroomDoor' } ],
+    connections: [ { label: '복도(좌)', dest: 'hallwayLeft', lockId: 'classroomDoor' } ],
     scene(s){
       return wrapScene(`
         ${windowDeco(380,30,220,90)}
         ${deskCluster(70,190)}
         ${blackboard(40,50,'p_board', !!s.solved.p_board)}
         ${locker(540,110,'p_locker', !!s.solved.p_locker)}
-        ${doorLocked(578,86,52,176,'classroomDoor','hallwayFront', !!s.unlocked.classroomDoor)}
+        ${doorLocked(578,86,52,176,'classroomDoor','hallwayLeft', !!s.unlocked.classroomDoor)}
       `, '#3a141d');
     }
   },
-  hallwayFront: {
-    name: '복도(앞)', desc: '본 강의실과 화장실 쪽으로 이어지는 조용한 통로.',
+  hallwayLeft: {
+    name: '복도(좌)', desc: '스터디룸 · 본 강의실 · 화장실이 늘어선 왼쪽 구역.',
     connections: [
       { label: '본 강의실', dest: 'classroom' },
+      { label: '스터디룸', dest: 'studyroom', lockId: 'studyroomDoor' },
       { label: '화장실', dest: 'restroom' },
-      { label: '복도(뒤)', dest: 'hallwayBack' }
+      { label: '복도(우)', dest: 'hallwayRight' }
     ],
     background: 'img/corridor.jpg',
-    hotspots: []
+    hotspots: [] // TODO: 게시판(p_bulletin), 스터디룸 문(studyroomDoor), 메모(p_study) 위치 확정되면 추가
   },
   studyroom: {
-    name: '스터디실', desc: '문을 열고 들어왔다. 책상 위에 배터리가 놓여 있었다.',
-    connections: [ { label: '복도(뒤)', dest: 'hallwayBack' } ],
+    name: '스터디룸', desc: '문을 열고 들어왔다. 책상 위에 배터리가 놓여 있었다.',
+    connections: [ { label: '복도(좌)', dest: 'hallwayLeft' } ],
     scene(){
       return wrapScene(`
         ${windowDeco(360,40,220,90)}
@@ -127,7 +128,7 @@ const ROOMS = {
   },
   restroom: {
     name: '화장실', desc: '가벼운 분위기 환기용 공간.',
-    connections: [ { label: '복도(앞)', dest: 'hallwayFront' } ],
+    connections: [ { label: '복도(좌)', dest: 'hallwayLeft' } ],
     scene(s){
       return wrapScene(`
         ${sinkMirror(250,90,'p_restroom', !!s.solved.p_restroom)}
@@ -136,34 +137,29 @@ const ROOMS = {
       `, '#301218');
     }
   },
-  hallwayBack: {
-    name: '복도(뒤)', desc: '스터디룸 · 인포메이션 · 엘리베이터가 모여 있는 중심 구역.',
+  hallwayRight: {
+    name: '복도(우)', desc: '인포데스크 · 엘리베이터로 이어지는 오른쪽 구역.',
     connections: [
-      { label: '복도(앞)', dest: 'hallwayFront' },
-      { label: '스터디실', dest: 'studyroom', lockId: 'studyroomDoor' },
+      { label: '복도(좌)', dest: 'hallwayLeft' },
       { label: '인포데스크', dest: 'frontdesk' },
       { label: '엘리베이터 앞', dest: 'elevatorFront' }
     ],
     scene(s){
       return wrapScene(`
-        ${signPlate(430, 60, 160, 'BY MEDIA', 'CLASS ROOM 01')}
-        ${bulletinBoard(40,60,'p_bulletin', !!s.solved.p_bulletin)}
-        ${doorLocked(180,86,110,176,'studyroomDoor','studyroom', !!s.unlocked.studyroomDoor)}
-        ${pinnedNote(138,150,'p_study', !!s.solved.p_study)}
         ${extinguisherBox(560,150,'p_extinguisher', !!s.solved.p_extinguisher)}
       `, '#341019');
     }
   },
   frontdesk: {
-    name: '아카데미 프론트', desc: '안내데스크. 서랍이 잠겨 있다.',
-    connections: [ { label: '복도(뒤)', dest: 'hallwayBack' } ],
+    name: '인포데스크', desc: '안내데스크. 서랍이 잠겨 있다.',
+    connections: [ { label: '복도(우)', dest: 'hallwayRight' } ],
     background: 'img/frontdesk.jpg',
     hotspots: [] // TODO: 방문자 명단(p_frontdesk), 서랍(frontdeskDrawer) 위치 확정되면 추가
   },
   elevatorFront: {
     name: '엘리베이터 앞',
     desc(s){ return s.power ? '전원이 복구됐다.' : '전원이 꺼져 있다.'; },
-    connections: [ { label: '복도(뒤)', dest: 'hallwayBack' } ],
+    connections: [ { label: '복도(우)', dest: 'hallwayRight' } ],
     scene(s){
       return wrapScene(`
         ${breakerBox(60,140,'breaker', !!s.power)}
@@ -173,7 +169,7 @@ const ROOMS = {
     }
   },
   elevatorInside: {
-    name: '엘리베이터 안', desc: '문이 닫히고, 1층으로 내려간다...',
+    name: '엘리베이터', desc: '문이 닫히고, 1층으로 내려간다...',
     connections: [],
     scene(){
       return wrapScene(`

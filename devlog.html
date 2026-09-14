@@ -261,6 +261,32 @@
         <p>사람이 직접 손으로 그래프를 설계하면 왕복 경로 하나를 빠뜨리기 쉬움. 실제로 전체 8개 방을 자동으로 순회하며 모든 연결에 되돌아오는 경로가 있는지 검증하는 절차를 거쳐, 플레이어가 특정 구간에 갇히는 치명적 버그를 배포 전에 미리 차단함.</p>
       </div>
     </div>
+
+    <div class="task">
+      <h3 class="task-title"><span class="num">03</span>이미지 표시 방식 수정 (잘라내기 → 전체 보이기)</h3>
+
+      <div class="block">
+        <div class="label-row"><span class="label how">HOW</span></div>
+        <p>배경 이미지 표시 방식을 object-fit: cover(화면에 꽉 채우려고 넘치는 부분을 잘라냄)에서 object-fit: contain(그림 전체를 항상 다 보여주고 남는 공간은 여백 처리)으로 변경. 여백은 어두운 배경색으로 채워 다크 테마와 자연스럽게 어울리도록 처리.</p>
+      </div>
+      <div class="block">
+        <div class="label-row"><span class="label why">WHY</span></div>
+        <p>화면 비율과 이미지 비율이 정확히 일치하지 않으면 기존 방식은 그림의 위아래 또는 좌우를 잘라내는데, 공들여 구도를 잡은 배경 그림에서 중요한 요소(문, 간판 등)가 잘려 보이는 문제가 있었음. 약간의 여백이 생기더라도 그림 전체가 항상 온전히 보이는 쪽이 완성도 면에서 더 나음.</p>
+      </div>
+    </div>
+
+    <div class="task">
+      <h3 class="task-title"><span class="num">04</span>씬 영역 레이아웃 버그 근본 수정 (줌 배율에 따라 하단이 잘리던 문제)</h3>
+
+      <div class="block">
+        <div class="label-row"><span class="label how">HOW</span></div>
+        <p>브라우저 확대 배율(80% vs 100%)에 따라 화면 하단이 잘리는 증상을 재현 · 조사한 끝에, 전체 게임 카드(#frame)에 max-height만 있고 명확한 height 값이 없어 내부 씬 영역의 flex 계산이 배율에 따라 반올림 오차로 흔들리는 것이 원인임을 특정. height:94vh를 명시적으로 추가해 근본 원인을 해결.</p>
+      </div>
+      <div class="block">
+        <div class="label-row"><span class="label why">WHY</span></div>
+        <p>눈으로 보이는 증상(하단 잘림)만 대응하면 재발할 수 있어, 여러 화면 크기와 배율 조합으로 실제 레이아웃 수치를 직접 측정해 정확한 원인을 특정한 뒤 수정함. max-height만 있고 height가 없는 flex 컨테이너는 자식의 flex-grow 계산이 브라우저 · 배율에 따라 불안정해질 수 있다는 것을 확인한 사례.</p>
+      </div>
+    </div>
   </div>
 
   <div class="template">

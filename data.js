@@ -94,89 +94,65 @@ const ROOMS = {
   classroom: {
     name: '본 강의실', desc: '5강의실. 야자 중 잠들었던 곳. 문이 잠겨 있다.',
     connections: [ { label: '복도(좌)', dest: 'hallwayLeft', lockId: 'classroomDoor' } ],
-    scene(s){
-      return wrapScene(`
-        ${windowDeco(380,30,220,90)}
-        ${deskCluster(70,190)}
-        ${blackboard(40,50,'p_board', !!s.solved.p_board)}
-        ${locker(540,110,'p_locker', !!s.solved.p_locker)}
-        ${doorLocked(578,86,52,176,'classroomDoor','hallwayLeft', !!s.unlocked.classroomDoor)}
-      `, '#3a141d');
-    }
+    background: 'img/classroom.png',
+    hotspots: [] // TODO: 칠판(p_board), 사물함(p_locker), 문(classroomDoor) 위치 확정되면 추가
   },
   hallwayLeft: {
-    name: '복도(좌)', desc: '스터디룸 · 본 강의실 · 화장실이 늘어선 왼쪽 구역.',
+    name: '복도(좌)', desc: '본 강의실 · 복도(우) · 인포데스크로 이어지는 구역.',
     connections: [
       { label: '본 강의실', dest: 'classroom' },
-      { label: '스터디룸', dest: 'studyroom', lockId: 'studyroomDoor' },
-      { label: '화장실', dest: 'restroom' },
-      { label: '복도(우)', dest: 'hallwayRight' }
+      { label: '복도(우)', dest: 'hallwayRight' },
+      { label: '인포데스크', dest: 'frontdesk' }
     ],
-    background: 'img/corridor.jpg',
-    hotspots: [] // TODO: 게시판(p_bulletin), 스터디룸 문(studyroomDoor), 메모(p_study) 위치 확정되면 추가
+    background: 'img/corridor.png',
+    hotspots: []
   },
   studyroom: {
     name: '스터디룸', desc: '문을 열고 들어왔다. 책상 위에 배터리가 놓여 있었다.',
-    connections: [ { label: '복도(좌)', dest: 'hallwayLeft' } ],
-    scene(){
-      return wrapScene(`
-        ${windowDeco(360,40,220,90)}
-        ${bookshelfDeco(60,90)}
-        ${deskChairDeco(320,160)}
-      `, '#331319');
-    }
+    connections: [ { label: '인포데스크', dest: 'frontdesk' } ],
+    background: 'img/studyroom.png',
+    hotspots: []
   },
   restroom: {
     name: '화장실', desc: '가벼운 분위기 환기용 공간.',
-    connections: [ { label: '복도(좌)', dest: 'hallwayLeft' } ],
-    scene(s){
-      return wrapScene(`
-        ${sinkMirror(250,90,'p_restroom', !!s.solved.p_restroom)}
-        ${stallDeco(460,110)}
-        ${stallDeco(530,110)}
-      `, '#301218');
-    }
+    connections: [ { label: '엘리베이터 앞', dest: 'elevatorFront' } ],
+    background: 'img/restroom.png',
+    hotspots: [] // TODO: 낙서(p_restroom) 위치 확정되면 추가
   },
   hallwayRight: {
-    name: '복도(우)', desc: '인포데스크 · 엘리베이터로 이어지는 오른쪽 구역.',
+    name: '복도(우)', desc: '엘리베이터 앞으로 이어지는 구역.',
     connections: [
       { label: '복도(좌)', dest: 'hallwayLeft' },
-      { label: '인포데스크', dest: 'frontdesk' },
       { label: '엘리베이터 앞', dest: 'elevatorFront' }
     ],
-    scene(s){
-      return wrapScene(`
-        ${extinguisherBox(560,150,'p_extinguisher', !!s.solved.p_extinguisher)}
-      `, '#341019');
-    }
+    background: 'img/corridor-right.png',
+    hotspots: [] // TODO: 소화전(p_extinguisher) 위치 확정되면 추가
   },
   frontdesk: {
     name: '인포데스크', desc: '안내데스크. 서랍이 잠겨 있다.',
-    connections: [ { label: '복도(우)', dest: 'hallwayRight' } ],
-    background: 'img/frontdesk.jpg',
+    connections: [
+      { label: '스터디룸', dest: 'studyroom', lockId: 'studyroomDoor' },
+      { label: '복도(좌)', dest: 'hallwayLeft' }
+    ],
+    background: 'img/frontdesk.png',
     hotspots: [] // TODO: 방문자 명단(p_frontdesk), 서랍(frontdeskDrawer) 위치 확정되면 추가
   },
   elevatorFront: {
     name: '엘리베이터 앞',
     desc(s){ return s.power ? '전원이 복구됐다.' : '전원이 꺼져 있다.'; },
-    connections: [ { label: '복도(우)', dest: 'hallwayRight' } ],
-    scene(s){
-      return wrapScene(`
-        ${breakerBox(60,140,'breaker', !!s.power)}
-        ${callPanel(500,150,'callpanel', !!s.power)}
-        ${elevatorDoors(230,90,180,170,'elevatorCall','elevatorInside', !!s.unlocked.elevatorCall)}
-      `, '#241014');
-    }
+    connections: [
+      { label: '복도(우)', dest: 'hallwayRight' },
+      { label: '화장실', dest: 'restroom' },
+      { label: '엘리베이터 안', dest: 'elevatorInside', lockId: 'elevatorCall' }
+    ],
+    background: 'img/elevator-front.png',
+    hotspots: [] // TODO: 차단기함(breaker), 호출패널(callpanel) 위치 확정되면 추가
   },
   elevatorInside: {
     name: '엘리베이터', desc: '문이 닫히고, 1층으로 내려간다...',
     connections: [],
-    scene(){
-      return wrapScene(`
-        <rect x="180" y="20" width="280" height="242" fill="#4a4a4d" stroke="#1a1a1c" stroke-width="4"/>
-        <rect x="200" y="40" width="240" height="30" rx="3" fill="#6b1f2e"/>
-      `, '#1c0d10');
-    }
+    background: 'img/elevator-inside.png',
+    hotspots: []
   }
 };
 

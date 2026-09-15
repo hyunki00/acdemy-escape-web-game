@@ -65,7 +65,34 @@ function render(){
     btn.onclick = () => { locked ? openLock(c.lockId, c.dest) : goRoom(c.dest); };
     nav.appendChild(btn);
   });
+
+  fitFrameWidth();
 }
+
+/* ---------- 프레임 너비를 배경 이미지 비율에 맞춰 조정 ----------
+   #frame이 화면 전체 높이(100vh)를 그대로 쓰면, 씬 영역(sceneWrap)의 가로세로
+   비율이 배경 이미지(16:9)보다 훨씬 가로로 길어질 수 있어 좌우 레터박스가
+   커집니다. 상단바·캡션·이동버튼·소지품바처럼 높이가 고정된 영역을 제외한
+   "씬에 실제로 쓸 수 있는 높이"를 구한 뒤, 그 높이에 이미지 비율을 곱해
+   프레임의 이상적인 너비를 계산하고, 화면 너비를 넘지 않는 선에서 적용합니다. */
+function fitFrameWidth(){
+  const frame = document.getElementById('frame');
+  const chromeHeight = ['topbar', 'captionBar', 'moveToggleWrap', 'invbar']
+    .reduce((sum, id) => {
+      const el = document.getElementById(id);
+      return sum + (el ? el.offsetHeight : 0);
+    }, 0);
+  const availableHeight = window.innerHeight - chromeHeight;
+  const imageAspect = 1920 / 1080; // 배경 이미지(16:9) 비율
+  const idealWidth = availableHeight * imageAspect;
+  frame.style.width = Math.min(window.innerWidth, Math.max(idealWidth, 0)) + 'px';
+
+  // 프레임 너비가 바뀌면 이미지 히트박스 레이어도 다시 맞춰줘야 함
+  document.querySelectorAll('.image-scene img').forEach(img => {
+    if (img.complete) fitHitboxLayer(img);
+  });
+}
+window.addEventListener('resize', fitFrameWidth);
 
 document.getElementById('moveToggleBtn').addEventListener('click', () => {
   document.getElementById('navOverlay').classList.toggle('show');

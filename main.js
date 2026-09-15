@@ -4,6 +4,22 @@
    반드시 다른 모든 스크립트보다 나중에 로드되어야 합니다.
 =========================================================== */
 
+/* ---------- 배경음악(BGM) ---------- */
+const bgmAudio = document.getElementById('bgmAudio');
+bgmAudio.volume = 0.5;
+function tryPlayBgm(){
+  const p = bgmAudio.play();
+  if (p && p.catch){
+    p.catch(() => {
+      // 브라우저의 자동재생 차단 — 사용자가 처음 클릭/키 입력하는 순간 재생 시도
+      const resume = () => { bgmAudio.play().catch(() => {}); document.removeEventListener('click', resume); document.removeEventListener('keydown', resume); };
+      document.addEventListener('click', resume, { once: true });
+      document.addEventListener('keydown', resume, { once: true });
+    });
+  }
+}
+tryPlayBgm();
+
 /* ---------- 타이머 ---------- */
 setInterval(() => {
   if (state.finished) return;
@@ -17,14 +33,18 @@ setInterval(() => {
 document.getElementById('settingsBtn').addEventListener('click', () => {
   openModal(`
     <h3>설정</h3>
-    <p class="sub">프로토타입 단계 — 음원은 추후 연결 예정</p>
+    <p class="sub">배경음악을 켜고 끌 수 있어요</p>
     <div style="display:flex; flex-direction:column; gap:10px;">
-      <button class="btn secondary" disabled>🔈 음소거 (준비 중)</button>
+      <button class="btn secondary" onclick="toggleMute(this)">${bgmAudio.muted ? '🔇 음소거 중 (클릭해서 켜기)' : '🔈 음소거'}</button>
       <button class="btn secondary" onclick="closeModal()">힌트는 각 퍼즐 창의 '힌트' 버튼을 확인하세요</button>
       <button class="btn" onclick="restartGame()">처음부터 다시 시작</button>
     </div>
   `);
 });
+function toggleMute(btn){
+  bgmAudio.muted = !bgmAudio.muted;
+  btn.textContent = bgmAudio.muted ? '🔇 음소거 중 (클릭해서 켜기)' : '🔈 음소거';
+}
 
 /* ---------- 리셋 ---------- */
 function restartGame(){
@@ -32,6 +52,7 @@ function restartGame(){
   state.inventory = [];
   state.solved = {};
   state.unlocked = {};
+  state.seenDialogue = {};
   state.power = false;
   state.startTime = Date.now();
   state.finished = false;

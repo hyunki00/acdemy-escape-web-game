@@ -4,15 +4,35 @@
 =========================================================== */
 
 /* ---------- 씬 클릭 위임 ---------- */
+function findHotspot(id){
+  const room = ROOMS[state.currentRoom];
+  return (room.hotspots || []).find(h => h.id === id);
+}
 document.getElementById('sceneArt').addEventListener('click', (e) => {
   const t = e.target.closest('[data-kind]');
   if (!t) return;
   const kind = t.dataset.kind, id = t.dataset.id, dest = t.dataset.dest;
+
+  // 장식용 상호작용 대사는 퍼즐이 없어 누를 때마다 항상 표시, 자유 이동 모드와도 무관
+  if (kind === 'flavor'){
+    const hs = findHotspot(id);
+    showDialogue(hs ? hs.line : '');
+    return;
+  }
+
   if (DEBUG_FREE_ROAM){
     if (kind === 'lock' && dest) goRoom(dest); // 잠긴 문이어도 목적지가 있으면 바로 이동
     return; // 퍼즐/차단기/호출패널 클릭은 전부 무시
   }
-  if (kind === 'puzzle') openPuzzle(id);
+  if (kind === 'puzzle'){
+    const hs = findHotspot(id);
+    if (hs && hs.line && !state.seenDialogue[id]){
+      state.seenDialogue[id] = true;
+      showDialogue(hs.line, () => openPuzzle(id));
+    } else {
+      openPuzzle(id);
+    }
+  }
   else if (kind === 'lock') openLock(id, dest || undefined);
   else if (kind === 'breaker') openBreaker();
   else if (kind === 'callpanel') openCallPanel();

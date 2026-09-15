@@ -28,7 +28,10 @@
     color:var(--text-dark);
     font-family:var(--font-body);
     display:flex; align-items:center; justify-content:center;
+    -webkit-user-select:none; user-select:none;
+    -webkit-tap-highlight-color: transparent;
   }
+  input, textarea{ -webkit-user-select:text; user-select:text; }
 
   #frame{
     width:100%;

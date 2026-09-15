@@ -84,10 +84,6 @@ function openBreaker(){
 }
 function onBreakerSolved(){ state.power = true; render(); }
 function openCallPanel(){
-  if (!state.power){
-    openModal(`<h3>호출 패널</h3><p class="sub">전원이 꺼져 있어 반응이 없다.</p>`);
-    return;
-  }
   openPuzzle('p_callcode');
 }
 function onCallCodeSolved(){ state.unlocked['elevatorCall'] = true; render(); }

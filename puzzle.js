@@ -3,13 +3,24 @@
    빈칸 채우기 / 출력값 맞추기 문제의 출제와 채점을 담당합니다.
 =========================================================== */
 
+/* 정답이 배열이면 그 중 하나만 맞아도 정답 처리 (i++ / i += 1 / i = i + 1 처럼
+   같은 의미의 다른 문법을 전부 인정하기 위함). 화면에 대표로 보여줄 땐 첫 번째 값을 사용. */
+function canonicalAnswer(p){ return Array.isArray(p.answer) ? p.answer[0] : p.answer; }
+/* 채점용 정규화: 공백을 전부 지우고 끝의 세미콜론도 지워서 비교 —
+   "i += 1"과 "i+=1", "power = power + 100;"과 "power=power+100" 등을 같은 답으로 처리 */
+function normalizeCode(str){ return String(str).trim().replace(/\s+/g, '').replace(/;+$/, ''); }
+function isAnswerCorrect(p, val){
+  const accepted = Array.isArray(p.answer) ? p.answer : [p.answer];
+  return accepted.some(a => normalizeCode(val) === normalizeCode(a));
+}
+
 /* ---------- 퍼즐 모달 ---------- */
 function openPuzzle(puzzleId){
   const p = PUZZLES[puzzleId];
   const already = state.solved[puzzleId];
   let codeHtml = p.code
     .replace(/\n/g, '<br>')
-    .replace('{{blank}}', `<input class="blank-input" id="blankInput" ${already ? `value="${p.answer}" disabled` : ''} placeholder="?">`);
+    .replace('{{blank}}', `<input class="blank-input" id="blankInput" ${already ? `value="${canonicalAnswer(p)}" disabled` : ''} placeholder="?">`);
 
   const bodyExtra = p.type === 'blank'
     ? `<div class="code-box">${codeHtml}</div>
@@ -45,9 +56,9 @@ function markSolved(puzzleId){
 }
 function checkBlank(puzzleId){
   const p = PUZZLES[puzzleId];
-  const val = document.getElementById('blankInput').value.trim();
+  const val = document.getElementById('blankInput').value;
   const fb = document.getElementById('puzzleFeedback');
-  if (val === p.answer){
+  if (isAnswerCorrect(p, val)){
     markSolved(puzzleId);
     fb.className = 'feedback ok';
     fb.textContent = p.noDigit ? '✓ 정답! 전원이 복구됐다.' : `✓ 정답! 코드 조각 확보: ${p.digit}`;
@@ -61,7 +72,9 @@ function checkOutput(puzzleId){
   const p = PUZZLES[puzzleId];
   const val = document.getElementById('outputInput').value.trim();
   const fb = document.getElementById('puzzleFeedback');
-  if (val.toUpperCase() === p.answer.toUpperCase()){
+  const accepted = Array.isArray(p.answer) ? p.answer : [p.answer];
+  const correct = accepted.some(a => val.toUpperCase() === String(a).toUpperCase());
+  if (correct){
     markSolved(puzzleId);
     fb.className = 'feedback ok';
     fb.textContent = p.flavor ? '✓ 정답! ("ESCAPE"라는 글자가 흐릿하게 보인다)' : `✓ 정답! 코드 조각 확보: ${p.digit}`;

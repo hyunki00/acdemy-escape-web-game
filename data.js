@@ -19,59 +19,62 @@ const state = {
   finished: false
 };
 
-/* ---------- 퍼즐 데이터 ---------- */
+/* ---------- 퍼즐 데이터 ----------
+   answer는 문자열 하나 또는 배열([...])일 수 있습니다. 배열이면 그 중 아무거나 맞으면 정답 처리.
+   (예: i++ / i += 1 / i = i + 1 처럼 같은 의미의 다른 문법을 모두 인정할 때 사용)
+   채점 시 공백과 끝의 세미콜론은 무시하고 비교합니다 (puzzle.js의 normalizeCode 참고). */
 const PUZZLES = {
   p_board: {
     title: '칠판 - 합계 구하기', type: 'blank',
-    code: 'int sum = 0;\nfor (int i = 1; i <= 5; i{{blank}}) {\n    sum += i;\n}\nSystem.out.println(sum);',
-    answer: '++', digit: '5',
-    hint: '반복문의 증감식을 채워보세요. (1부터 5까지 1씩)'
+    code: 'let sum = 0;\nfor (let i = 1; i <= 5; {{blank}}) {\n    sum += i;\n}\nconsole.log(sum);',
+    answer: ['i++', 'i += 1', 'i = i + 1'], digit: '5',
+    hint: '반복문의 증감식을 채워보세요. (1부터 5까지 1씩) — i++ 든 i += 1 이든 같은 뜻이면 다 정답이에요.'
   },
   p_locker: {
     title: '사물함 - 최댓값 찾기', type: 'output',
-    code: 'int[] nums = {3, 7, 2, 9, 4};\nint max = nums[0];\nfor (int i = 1; i < nums.length; i++) {\n    if (nums[i] > max) {\n        max = nums[i];\n    }\n}\nSystem.out.println(max);',
+    code: 'let nums = [3, 7, 2, 9, 4];\nlet max = nums[0];\nfor (let i = 1; i < nums.length; i++) {\n    if (nums[i] > max) {\n        max = nums[i];\n    }\n}\nconsole.log(max);',
     answer: '9', digit: '9',
     hint: '배열에서 가장 큰 값을 찾는 코드예요.'
   },
   p_bulletin: {
     title: '게시판 - 합계의 나머지', type: 'output',
-    code: 'int[] arr = {2, 4, 6, 8};\nint total = 0;\nfor (int n : arr) {\n    total += n;\n}\nSystem.out.println(total % 10);',
+    code: 'let arr = [2, 4, 6, 8];\nlet total = 0;\nfor (const n of arr) {\n    total += n;\n}\nconsole.log(total % 10);',
     answer: '0', digit: '0',
     hint: '배열 합을 구한 뒤 10으로 나눈 나머지예요.'
   },
   p_study: {
     title: '스터디실 문에 붙은 메모', type: 'blank',
-    code: 'int count = 0;\nwhile (count {{blank}} 3) {\n    count++;\n}\nSystem.out.println(count);',
+    code: 'let count = 0;\nwhile (count {{blank}} 3) {\n    count++;\n}\nconsole.log(count);',
     answer: '<', digit: '3',
     hint: 'count가 3이 될 때까지 반복하려면?'
   },
   p_restroom: {
     title: '낙서 - 문자열 이어붙이기', type: 'output', flavor: true,
-    code: 'String a = "ESC";\nString b = "APE";\nSystem.out.println(a + b);',
+    code: 'let a = "ESC";\nlet b = "APE";\nconsole.log(a + b);',
     answer: 'ESCAPE',
     hint: '문자열 두 개를 이어 붙이면?'
   },
   p_extinguisher: {
     title: '소화전 - 배열 인덱스', type: 'blank',
-    code: 'int[] codes = {4, 6, 8, 2};\nSystem.out.println(codes[{{blank}}]);',
+    code: 'let codes = [4, 6, 8, 2];\nconsole.log(codes[{{blank}}]);',
     answer: '1', digit: '6',
     hint: '두 번째 원소(인덱스 1)를 출력하려면?'
   },
   p_frontdesk: {
     title: '방문자 명단 - 조건부 보너스', type: 'output',
-    code: 'int score = 82;\nint bonus = (score >= 80) ? 7 : 0;\nSystem.out.println(bonus);',
+    code: 'let score = 82;\nlet bonus = (score >= 80) ? 7 : 0;\nconsole.log(bonus);',
     answer: '7', digit: '7',
     hint: '삼항 연산자의 조건을 따라가 보세요.'
   },
   p_breaker: {
     title: '차단기함 - 전원 복구', type: 'blank', noDigit: true,
-    code: 'int power = 0;\npower {{blank}} 100;\nSystem.out.println(power);',
-    answer: '+=',
-    hint: 'power에 100을 더해서 대입하려면?'
+    code: 'let power = 0;\n{{blank}}\nconsole.log(power);',
+    answer: ['power += 100', 'power = power + 100'],
+    hint: 'power에 100을 더해서 대입하려면? — power += 100; 이든 power = power + 100; 이든 다 정답이에요.'
   },
   p_callcode: {
     title: '호출 패널 - 최종 코드', type: 'output',
-    code: 'int a = 6, b = 7;\nSystem.out.println(a * b - 5);',
+    code: 'let a = 6, b = 7;\nconsole.log(a * b - 5);',
     answer: '37', digit: '37',
     hint: '곱셈 먼저, 그 다음 뺄셈이에요.'
   }
@@ -132,13 +135,33 @@ const ROOMS = {
     name: '스터디룸', desc: '문을 열고 들어왔다. 책상 위에 배터리가 놓여 있었다.',
     connections: [ { label: '인포데스크', dest: 'frontdesk' } ],
     background: 'img/studyroom.png',
-    hotspots: []
+    hotspots: [
+      { kind: 'flavor', id: 'f_vase', label: '화분',
+        line: '마른 나뭇가지가 꽂힌 화분이다. 오래 돌보지 않은 듯하다.',
+        points: [[9.58,42.31],[9.01,55.28],[10.26,60.19],[9.58,64.54],[8.44,62.04],[8.49,54.54],[6.46,48.98],[7.66,55.0],[7.66,62.78],[9.69,70.28],[9.64,72.59],[8.07,73.8],[8.44,75.37],[7.45,84.07],[8.65,93.61],[11.25,94.07],[12.5,91.67],[13.23,81.39],[12.14,75.37],[12.45,73.7],[11.04,72.41],[13.39,62.69],[15.31,60.65],[15.73,57.13],[14.58,60.19],[13.12,60.93],[12.92,57.78],[14.06,54.91],[14.27,51.11],[13.44,51.76],[12.08,58.52],[10.89,57.13],[9.74,52.78]] },
+      { kind: 'flavor', id: 'f_studySign', label: '스터디룸 팻말',
+        line: '"스터디룸 STUDY ROOM" — 문 옆에 붙은 팻말이다.',
+        points: [[73.28,5.28],[73.28,24.35],[84.06,24.35],[83.96,5.28]] },
+      { kind: 'flavor', id: 'f_table', label: '책상',
+        line: '책상 위에 배터리가 놓여 있던 자리다. 지금은 비어 있다.',
+        points: [[39.43,60.46],[39.01,68.06],[39.74,68.15],[39.79,88.33],[41.3,88.24],[41.35,70.19],[55.62,70.19],[55.68,87.96],[57.24,87.96],[57.24,68.98],[57.97,68.06],[57.81,66.3],[53.59,60.46]] }
+    ] // TODO: 게시판(p_bulletin), 메모(p_study), 문(studyroomDoor) 위치 확정되면 추가
   },
   restroom: {
     name: '화장실', desc: '가벼운 분위기 환기용 공간.',
     connections: [ { label: '엘리베이터 앞', dest: 'elevatorFront' } ],
     background: 'img/restroom.png',
-    hotspots: [] // TODO: 낙서(p_restroom) 위치 확정되면 추가
+    hotspots: [
+      { kind: 'puzzle', id: 'p_restroom', label: '거울',
+        line: '거울에 낙서가 흐릿하게 남아있다. 뭔가 적혀 있는 것 같은데...',
+        points: [[0.0,16.2],[0.1,63.7],[10.62,59.72],[10.52,22.04]] },
+      { kind: 'flavor', id: 'f_cabinet', label: '벽면 캐비닛',
+        line: '작은 벽면 캐비닛이다. 손잡이를 당겨봐도 잠겨서 열리지 않는다.',
+        points: [[63.59,44.07],[63.54,53.61],[64.95,53.89],[67.86,53.7],[67.97,52.69],[67.92,44.07]] },
+      { kind: 'flavor', id: 'f_stalls', label: '화장실 칸막이',
+        line: '칸막이 문들이 전부 닫혀 있다. 안에는 아무도 없는 것 같다.',
+        points: [[40.36,20.83],[39.27,20.83],[39.27,26.3],[14.53,26.3],[14.53,65.0],[23.91,65.46],[23.18,75.19],[23.54,84.81],[40.26,84.63],[40.73,76.57],[43.07,77.41],[44.27,70.65],[45.89,70.56],[46.15,67.31],[48.02,65.56],[48.18,34.35]] }
+    ]
   },
   hallwayRight: {
     name: '복도(우)', desc: '엘리베이터 앞으로 이어지는 구역.',
@@ -166,18 +189,29 @@ const ROOMS = {
       { label: '복도(좌)', dest: 'hallwayLeft' }
     ],
     background: 'img/frontdesk.png',
-    hotspots: [] // TODO: 방문자 명단(p_frontdesk), 서랍(frontdeskDrawer) 위치 확정되면 추가
+    hotspots: [
+      { kind: 'flavor', id: 'f_deskMonitor', label: '모니터',
+        line: '모니터가 꺼져 있다. 전원 버튼을 눌러봐도 반응이 없다.',
+        points: [[76.82,51.76],[76.77,65.83],[80.78,67.31],[80.52,69.17],[78.75,69.54],[78.7,70.28],[83.59,71.94],[85.83,71.39],[85.73,70.65],[82.76,69.72],[82.81,67.59],[89.9,69.17],[89.84,52.41]] },
+      { kind: 'flavor', id: 'f_logo', label: 'BYEMEDIA 로고',
+        line: '"BYEMEDIA TOGETHER" — 벽에 새겨진 회사 로고다.',
+        points: [[81.72,31.3],[80.57,32.31],[79.64,34.35],[79.27,36.2],[79.22,39.17],[79.53,40.93],[80.47,43.15],[81.15,43.8],[82.24,44.07],[83.44,43.33],[84.48,41.67],[85.16,38.8],[85.21,36.3],[84.79,34.07],[84.06,32.5],[82.86,31.39]] },
+      { kind: 'flavor', id: 'f_deskChair', label: '의자',
+        line: '의자 하나가 카운터에서 살짝 빠져나와 있다.',
+        points: [[40.73,61.11],[41.88,70.83],[42.66,72.41],[44.11,72.96],[44.64,74.07],[44.58,78.61],[42.5,79.63],[42.24,81.02],[42.81,81.76],[44.06,82.13],[47.4,81.67],[47.76,80.93],[47.55,79.72],[45.42,78.61],[45.42,73.61],[45.78,72.87],[48.91,71.94],[49.11,70.37],[48.44,69.44],[48.23,67.69],[47.86,66.94],[45.57,66.85],[44.84,65.09],[43.75,64.72],[42.81,61.85]] }
+    ] // TODO: 방문자 명단(p_frontdesk), 서랍(frontdeskDrawer) 위치 확정되면 추가
   },
   elevatorFront: {
     name: '엘리베이터 앞',
     desc(s){ return s.power ? '전원이 복구됐다.' : '전원이 꺼져 있다.'; },
     connections: [
       { label: '복도(우)', dest: 'hallwayRight' },
-      { label: '화장실', dest: 'restroom' },
-      { label: '엘리베이터 안', dest: 'elevatorInside', lockId: 'elevatorCall' }
+      { label: '화장실', dest: 'restroom' }
     ],
     background: 'img/elevator-front.png',
     hotspots: [
+      { kind: 'lock', id: 'elevatorCall', dest: 'elevatorInside', label: '엘리베이터 문',
+        points: [[39.74,0.0],[19.84,0.0],[22.6,99.91],[29.38,99.91],[34.53,92.59],[40.94,93.33],[41.46,92.5]] },
       { kind: 'flavor', id: 'f_maroonDoor', label: '문',
         line: '굳게 닫힌 문. 손잡이를 돌려봐도 꿈쩍하지 않는다.',
         points: [[47.92,18.8],[48.7,80.19],[49.17,79.44],[49.22,74.35],[53.75,67.69],[56.2,67.59],[55.78,23.61]] },

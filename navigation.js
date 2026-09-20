@@ -16,7 +16,33 @@ document.getElementById('sceneArt').addEventListener('click', (e) => {
   // 장식용 상호작용 대사는 퍼즐이 없어 누를 때마다 항상 표시, 자유 이동 모드와도 무관
   if (kind === 'flavor'){
     const hs = findHotspot(id);
-    showDialogue(hs ? hs.line : '');
+    if (!hs){ showDialogue(''); return; }
+
+    // 1) 특정 아이템(들)을 보유했을 때만 나오는 1회성 대사 (+ 사이드이펙트: 퍼즐 오픈, 전원 복구 등)
+    if (hs.withItem){
+      const need = Array.isArray(hs.withItem.requires) ? hs.withItem.requires : [hs.withItem.requires];
+      const hasAll = need.every(itemId => hasItem(itemId));
+      if (hasAll && !state.seenDialogue['with_' + id]){
+        state.seenDialogue['with_' + id] = true;
+        // setState는 배경 교체처럼 "즉시 눈에 보여야" 자연스러운 변화라, 대사가 뜨는 것과 동시에 바로 반영
+        if (hs.withItem.setState){ state[hs.withItem.setState] = true; render(); }
+        showDialogue(hs.withItem.line, () => {
+          if (hs.withItem.opensPuzzle) openPuzzle(hs.withItem.opensPuzzle);
+          if (hs.withItem.setPower) onBreakerSolved();
+        });
+        return;
+      }
+    }
+
+    // 2) 처음 상호작용 시 아이템 획득
+    if (hs.grantItem && !hasItem(hs.grantItem.id)){
+      addInventory(hs.grantItem);
+      showDialogue(hs.lineFirst || hs.line);
+      return;
+    }
+
+    // 3) 기본 대사 (반복 가능)
+    showDialogue(hs.line);
     return;
   }
 

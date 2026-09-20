@@ -6,7 +6,7 @@
 
 /* 테스트용 자유 이동 모드 — true면 퍼즐 클릭 무시 + 모든 문/서랍이 열린 것처럼 취급됩니다.
    실제 플레이 테스트로 되돌리려면 false로 바꾸세요. */
-const DEBUG_FREE_ROAM = true;
+const DEBUG_FREE_ROAM = false;
 
 const state = {
   currentRoom: 'classroom',
@@ -25,10 +25,18 @@ const state = {
    채점 시 공백과 끝의 세미콜론은 무시하고 비교합니다 (puzzle.js의 normalizeCode 참고). */
 const PUZZLES = {
   p_board: {
-    title: '칠판 - 합계 구하기', type: 'blank',
-    code: 'let sum = 0;\nfor (let i = 1; i <= 5; {{blank}}) {\n    sum += i;\n}\nconsole.log(sum);',
-    answer: ['i++', 'i += 1', 'i = i + 1'], digit: '5',
-    hint: '반복문의 증감식을 채워보세요. (1부터 5까지 1씩) — i++ 든 i += 1 이든 같은 뜻이면 다 정답이에요.'
+    title: '모니터 - 강의명 빈칸 채우기', type: 'blank',
+    code: '[IBM x RedHat] AI {{blank}} - AX Academy 8기',
+    answer: 'Transformation', digit: '00000000', // TODO: 실제 오리엔테이션 날짜(yyyymmdd)로 교체 필요
+    hint: '지금 듣고 있는 강의 이름 그대로예요.',
+    stage1SuccessMsg: '✓ 정답! 화면에 다음 문장이 떠오른다... "진짜 관문은 따로 있다."',
+    followUp: {
+      title: '문 앞의 마지막 관문', type: 'text',
+      subtext: '화면에 이어서 힌트가 떠 있다.',
+      prompt: 'AX Academy 8기의 첫 오리엔테이션을 진행했던 날짜는? (yyyy-mm-dd 형식이 아니라, 숫자 8자리만 순서대로 입력. 예: 20260305)',
+      answer: '00000000', // TODO: 실제 오리엔테이션 날짜(숫자 8자리, YYYYMMDD)로 교체 필요
+      hint: '오리엔테이션 날짜를 YYYYMMDD 형식의 숫자 8자리로만 입력해보자.'
+    }
   },
   p_locker: {
     title: '사물함 - 최댓값 찾기', type: 'output',
@@ -49,10 +57,12 @@ const PUZZLES = {
     hint: 'count가 3이 될 때까지 반복하려면?'
   },
   p_restroom: {
-    title: '낙서 - 문자열 이어붙이기', type: 'output', flavor: true,
-    code: 'let a = "ESC";\nlet b = "APE";\nconsole.log(a + b);',
-    answer: 'ESCAPE',
-    hint: '문자열 두 개를 이어 붙이면?'
+    title: '거울 낙서 - 뒤집어 읽기', type: 'output', flavor: true,
+    subtext: '김이 서린 거울 위, 누군가 손가락으로 남긴 글자가 보인다. 어쩐지 좌우가 뒤집힌 것 같은데?',
+    code: 'GNIKOJ TSUJ',
+    answer: 'JUST JOKING',
+    hint: '글자 순서를 거꾸로 읽어보자.',
+    successMsg: '✓ "JUST JOKING" — 장난이라는 뜻. 누가 이런 걸 써놨을까?'
   },
   p_extinguisher: {
     title: '소화전 - 배열 인덱스', type: 'blank',
@@ -73,18 +83,17 @@ const PUZZLES = {
     hint: 'power에 100을 더해서 대입하려면? — power += 100; 이든 power = power + 100; 이든 다 정답이에요.'
   },
   p_callcode: {
-    title: '호출 패널 - 최종 코드', type: 'output',
-    code: 'let a = 6, b = 7;\nconsole.log(a * b - 5);',
-    answer: '37', digit: '37',
-    hint: '곱셈 먼저, 그 다음 뺄셈이에요.'
+    title: '호출 패널 - 마지막 메시지', type: 'choice',
+    prompt: '호출 버튼 위, 익숙한 손글씨로 작은 메모가 붙어 있다:\n\n"속아줘서 고마워. 이제 집에 가자. — 담당 강사"\n\n그 밑에 마지막 질문 하나가 더 적혀 있다: "오늘 밤 이 학원의 주인공은 누구였을까?"',
+    options: ['이름 모를 침입자', '경비원 아저씨', '유령', '처음부터 나를 지켜보던 담당 강사님'],
+    correct: 3, digit: '37',
+    hint: '손글씨체를 다시 보자. 낯설지 않다.'
   }
 };
 
 /* ---------- 잠금(문/서랍) 데이터 ---------- */
 const LOCKS = {
-  classroomDoor: { require: ['p_board', 'p_locker'], reward: { id: 'cardkey', name: '카드키', icon: '🔑' } },
-  studyroomDoor: { require: ['p_bulletin', 'p_study'], reward: { id: 'battery', name: '배터리', icon: '🔋' } },
-  frontdeskDrawer: { require: ['p_extinguisher', 'p_frontdesk'], reward: { id: 'masterkey', name: '마스터키', icon: '🗝️' } },
+  classroomDoor: { require: ['p_board'], reward: { id: 'cardkey', name: '카드키', icon: '🔑' } },
   elevatorCall: { require: ['p_callcode'], reward: null }
 };
 
@@ -98,21 +107,25 @@ const ROOMS = {
   classroom: {
     name: '본 강의실', desc: '5강의실. 야자 중 잠들었던 곳. 문이 잠겨 있다.',
     connections: [ { label: '복도(좌)', dest: 'hallwayLeft', lockId: 'classroomDoor' } ],
-    background: 'img/classroom.png',
+    background(s){ return s.projectorLit ? 'img/classroom-lit.png' : 'img/classroom.png'; },
     hotspots: [
       { kind: 'puzzle', id: 'p_board', label: '모니터 화면',
-        line: '저 모니터만 이상하게 켜져 있다. 화면에 낯익은 코드가 떠 있다.',
+        line: '저 모니터만 이상하게 켜져 있다. 화면에 낯익은 문구가 떠 있다.',
         points: [[0,60.65],[0,84.63],[5.57,84.72],[2.6,86.39],[2.14,87.22],[2.34,88.52],[4.9,89.72],[8.44,89.54],[11.93,87.22],[11.67,85.65],[10.16,84.63],[17.19,84.26],[17.19,60.65]] },
       { kind: 'flavor', id: 'f_chair', label: '의자',
         line: '누군가 앉아있던 것처럼, 의자가 살짝 돌아가 있다.',
+        lineFirst: '의자 밑에 뭔가 떨어져 있다. 손전등이다 — 꺼져 있었지만 아직 배터리가 남아있다.',
+        grantItem: { id: 'flashlight', name: '손전등', icon: '🔦' },
         points: [[82.24,67.59],[80.42,66.76],[76.51,67.13],[74.43,68.24],[72.71,70.46],[72.29,72.96],[73.18,80.28],[69.69,80.65],[70.26,82.59],[69.69,84.72],[69.32,97.04],[69.84,96.85],[70.57,83.61],[74.74,86.94],[72.97,87.87],[72.45,89.35],[72.97,99.91],[73.7,99.91],[73.12,89.81],[73.59,88.61],[74.64,88.24],[74.84,84.91],[81.56,84.44],[81.93,78.33],[83.33,70.93],[83.23,69.17]] },
       { kind: 'flavor', id: 'f_projector', label: '빔프로젝터 화면',
         line: '빔프로젝터 화면엔 아무것도 비치지 않는다. 그저 하얗게 빛나고 있을 뿐.',
+        withItem: { requires: 'flashlight', setState: 'projectorLit',
+          line: '손전등을 비추자, 화면에 반응이 생기며 빛이 들어온다 — 구석에 "+22"라는 숫자가 옅게 떠오른다.' },
         points: [[40.89,23.33],[41.56,25.46],[41.46,53.15],[59.06,53.15],[59.11,48.06],[64.11,48.06],[64.11,25.37],[64.69,23.33]] },
       { kind: 'flavor', id: 'f_ac', label: '에어컨',
         line: '에어컨은 꺼져 있다. 정적만이 감돈다.',
         points: [[46.77,17.13],[47.14,21.11],[47.5,21.48],[57.81,21.48],[59.48,17.59],[59.48,17.13]] }
-    ] // TODO: 사물함(p_locker), 문(classroomDoor) 위치 확정되면 추가
+    ]
   },
   hallwayLeft: {
     name: '복도(좌)', desc: '본 강의실 · 복도(우) · 인포데스크로 이어지는 구역.',
@@ -138,14 +151,18 @@ const ROOMS = {
     hotspots: [
       { kind: 'flavor', id: 'f_vase', label: '화분',
         line: '마른 나뭇가지가 꽂힌 화분이다. 오래 돌보지 않은 듯하다.',
+        withItem: { requires: 'glasses',
+          line: '화분 뒤에 접힌 메모가 숨겨져 있다 — "오늘만 특별히, 답은 알아서 찾아봐 ㅎㅎ"' },
         points: [[9.58,42.31],[9.01,55.28],[10.26,60.19],[9.58,64.54],[8.44,62.04],[8.49,54.54],[6.46,48.98],[7.66,55.0],[7.66,62.78],[9.69,70.28],[9.64,72.59],[8.07,73.8],[8.44,75.37],[7.45,84.07],[8.65,93.61],[11.25,94.07],[12.5,91.67],[13.23,81.39],[12.14,75.37],[12.45,73.7],[11.04,72.41],[13.39,62.69],[15.31,60.65],[15.73,57.13],[14.58,60.19],[13.12,60.93],[12.92,57.78],[14.06,54.91],[14.27,51.11],[13.44,51.76],[12.08,58.52],[10.89,57.13],[9.74,52.78]] },
       { kind: 'flavor', id: 'f_studySign', label: '스터디룸 팻말',
         line: '"스터디룸 STUDY ROOM" — 문 옆에 붙은 팻말이다.',
         points: [[73.28,5.28],[73.28,24.35],[84.06,24.35],[83.96,5.28]] },
       { kind: 'flavor', id: 'f_table', label: '책상',
-        line: '책상 위에 배터리가 놓여 있던 자리다. 지금은 비어 있다.',
+        line: '책상 위엔 별다른 게 남아있지 않다.',
+        lineFirst: '책상 위에 안경 케이스가 놓여 있다. 강사님이 늘 쓰시던 그 안경이다.',
+        grantItem: { id: 'glasses', name: '안경 케이스', icon: '👓' },
         points: [[39.43,60.46],[39.01,68.06],[39.74,68.15],[39.79,88.33],[41.3,88.24],[41.35,70.19],[55.62,70.19],[55.68,87.96],[57.24,87.96],[57.24,68.98],[57.97,68.06],[57.81,66.3],[53.59,60.46]] }
-    ] // TODO: 게시판(p_bulletin), 메모(p_study), 문(studyroomDoor) 위치 확정되면 추가
+    ]
   },
   restroom: {
     name: '화장실', desc: '가벼운 분위기 환기용 공간.',
@@ -183,23 +200,27 @@ const ROOMS = {
     ] // TODO: 소화전(p_extinguisher) 위치 확정되면 추가
   },
   frontdesk: {
-    name: '인포데스크', desc: '안내데스크. 서랍이 잠겨 있다.',
+    name: '인포데스크', desc: '안내데스크. 인기척 없이 조용하다.',
     connections: [
-      { label: '스터디룸', dest: 'studyroom', lockId: 'studyroomDoor' },
+      { label: '스터디룸', dest: 'studyroom' },
       { label: '복도(좌)', dest: 'hallwayLeft' }
     ],
     background: 'img/frontdesk.png',
     hotspots: [
       { kind: 'flavor', id: 'f_deskMonitor', label: '모니터',
         line: '모니터가 꺼져 있다. 전원 버튼을 눌러봐도 반응이 없다.',
+        withItem: { requires: 'redpen',
+          line: '펜 끝으로 꺼진 화면 먼지를 슥 문지르자, 흐릿하게 출입 기록이 비친다 — 마지막 접속자는 다름 아닌 담당 강사님이었다.' },
         points: [[76.82,51.76],[76.77,65.83],[80.78,67.31],[80.52,69.17],[78.75,69.54],[78.7,70.28],[83.59,71.94],[85.83,71.39],[85.73,70.65],[82.76,69.72],[82.81,67.59],[89.9,69.17],[89.84,52.41]] },
       { kind: 'flavor', id: 'f_logo', label: 'BYEMEDIA 로고',
         line: '"BYEMEDIA TOGETHER" — 벽에 새겨진 회사 로고다.',
         points: [[81.72,31.3],[80.57,32.31],[79.64,34.35],[79.27,36.2],[79.22,39.17],[79.53,40.93],[80.47,43.15],[81.15,43.8],[82.24,44.07],[83.44,43.33],[84.48,41.67],[85.16,38.8],[85.21,36.3],[84.79,34.07],[84.06,32.5],[82.86,31.39]] },
       { kind: 'flavor', id: 'f_deskChair', label: '의자',
         line: '의자 하나가 카운터에서 살짝 빠져나와 있다.',
+        lineFirst: '의자 아래 빨간 펜이 떨어져 있다 — 낯익은 글씨체로 이름이 새겨져 있다.',
+        grantItem: { id: 'redpen', name: '빨간 펜', icon: '🖊️' },
         points: [[40.73,61.11],[41.88,70.83],[42.66,72.41],[44.11,72.96],[44.64,74.07],[44.58,78.61],[42.5,79.63],[42.24,81.02],[42.81,81.76],[44.06,82.13],[47.4,81.67],[47.76,80.93],[47.55,79.72],[45.42,78.61],[45.42,73.61],[45.78,72.87],[48.91,71.94],[49.11,70.37],[48.44,69.44],[48.23,67.69],[47.86,66.94],[45.57,66.85],[44.84,65.09],[43.75,64.72],[42.81,61.85]] }
-    ] // TODO: 방문자 명단(p_frontdesk), 서랍(frontdeskDrawer) 위치 확정되면 추가
+    ]
   },
   elevatorFront: {
     name: '엘리베이터 앞',
@@ -214,6 +235,9 @@ const ROOMS = {
         points: [[39.74,0.0],[19.84,0.0],[22.6,99.91],[29.38,99.91],[34.53,92.59],[40.94,93.33],[41.46,92.5]] },
       { kind: 'flavor', id: 'f_maroonDoor', label: '문',
         line: '굳게 닫힌 문. 손잡이를 돌려봐도 꿈쩍하지 않는다.',
+        withItem: { requires: ['redpen', 'flashlight', 'glasses'],
+          line: '문틈 사이로 강사님 명찰이 떨어져 있는 게 보인다. 그제야 알겠다 — 정전도, 잠긴 문들도, 전부 강사님의 장난이었다는 걸. 마침 배전함 쪽에서 "달칵" 하는 소리와 함께 불빛이 돌아온다.',
+          setPower: true },
         points: [[47.92,18.8],[48.7,80.19],[49.17,79.44],[49.22,74.35],[53.75,67.69],[56.2,67.59],[55.78,23.61]] },
       { kind: 'flavor', id: 'f_waterCooler', label: '정수기',
         line: '전원이 나가 정수기 표시등도 꺼져 있다.',

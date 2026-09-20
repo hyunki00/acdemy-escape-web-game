@@ -217,21 +217,48 @@ function deskChairDeco(x,y){
      - 다각형(사물 윤곽 따라가기): { kind, id, dest, label, points: [[x,y], ...] } (0~100 퍼센트)
 =========================================================== */
 function renderImageScene(room, state){
+  const bg = typeof room.background === 'function' ? room.background(state) : room.background;
   const shapesHtml = (room.hotspots || []).map(h => {
     let solved = false;
     if (h.kind === 'puzzle') solved = !!state.solved[h.id];
     if (h.kind === 'lock') solved = !!state.unlocked[h.id];
     const cls = solved ? 'is-solved' : '';
     const attrs = `class="${cls}" data-kind="${h.kind}" data-id="${h.id || ''}" data-dest="${h.dest || ''}"`;
+
+    // litWhen 상태가 true면, 도형의 중앙에 원형 스포트라이트 + 텍스트를 얹어서 그림
+    let litHtml = '';
+    if (h.litWhen && state[h.litWhen] && h.points){
+      const xs = h.points.map(pt => pt[0]);
+      const ys = h.points.map(pt => pt[1]);
+      const minX = Math.min(...xs), maxX = Math.max(...xs);
+      const minY = Math.min(...ys), maxY = Math.max(...ys);
+      const cx = (minX + maxX) / 2;
+      const cy = (minY + maxY) / 2;
+      const ratio = h.litRadiusRatio || 0.3;
+      const rx = (maxX - minX) * ratio;
+      const ry = (maxY - minY) * ratio;
+      litHtml = `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" class="lit-overlay" fill="url(#litGlow)" pointer-events="none"></ellipse>
+        <text x="${cx}" y="${cy}" class="lit-text" text-anchor="middle" dominant-baseline="middle" pointer-events="none">${h.litLabel || ''}</text>`;
+    }
+
     if (h.points){
       const pts = h.points.map(p => p.join(',')).join(' ');
-      return `<polygon points="${pts}" ${attrs}><title>${h.label || ''}</title></polygon>`;
+      return `${litHtml}<polygon points="${pts}" ${attrs}><title>${h.label || ''}</title></polygon>`;
     }
-    return `<rect x="${h.x}" y="${h.y}" width="${h.w}" height="${h.h}" rx="1" ${attrs}><title>${h.label || ''}</title></rect>`;
+    return `${litHtml}<rect x="${h.x}" y="${h.y}" width="${h.w}" height="${h.h}" rx="1" ${attrs}><title>${h.label || ''}</title></rect>`;
   }).join('');
   return `<div class="image-scene">
-    <img src="${room.background}" alt="${room.name}" onload="fitHitboxLayer(this)">
-    <svg class="hitbox-layer" viewBox="0 0 100 100" preserveAspectRatio="none">${shapesHtml}</svg>
+    <img src="${bg}" alt="${room.name}" onload="fitHitboxLayer(this)">
+    <svg class="hitbox-layer" viewBox="0 0 100 100" preserveAspectRatio="none">
+      <defs>
+        <radialGradient id="litGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="rgba(255,250,220,0.95)"/>
+          <stop offset="55%" stop-color="rgba(255,238,165,0.5)"/>
+          <stop offset="100%" stop-color="rgba(255,238,165,0)"/>
+        </radialGradient>
+      </defs>
+      ${shapesHtml}
+    </svg>
     <div class="flicker-overlay"></div>
   </div>`;
 }

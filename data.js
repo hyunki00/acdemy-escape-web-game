@@ -8,6 +8,18 @@
    실제 플레이 테스트로 되돌리려면 false로 바꾸세요. */
 const DEBUG_FREE_ROAM = false;
 
+/* 소지품 바에 항상 미리 배열해둘 빈 칸 개수 (아이템을 주우면 순서대로 채워짐) */
+const INVENTORY_SLOTS = 4;
+
+/* 잠금(도어락) 모달 공통 텍스트. 개별 LOCKS 항목에 같은 이름의 필드를 넣으면
+   그 잠금에서만 다른 문구로 재정의됩니다 (예: LOCKS.xxx.wrong = '...'). */
+const LOCK_TEXT = {
+  title: '암호를 입력해주세요',
+  subtext(len){ return `${len}자리 비밀번호를 입력하세요.`; },
+  wrong: '틀렸어요. 다시 시도해보세요.',
+  success: '✓ 열렸다!'
+};
+
 const state = {
   currentRoom: 'classroom',
   inventory: [],
@@ -25,17 +37,18 @@ const state = {
    채점 시 공백과 끝의 세미콜론은 무시하고 비교합니다 (puzzle.js의 normalizeCode 참고). */
 const PUZZLES = {
   p_board: {
-    title: '모니터 - 강의명 빈칸 채우기', type: 'blank',
+    title: '낯익은 문장이다. 분명 빈칸에 들어갈 단어가...', type: 'blank', flavor: true,
+    subtext: '분명 내가 듣고 있는 강의명 같은데?.',
+    successMsg: '✓ 정보를 다 모았다! 이제 이 정보들을 직접 조합해서 문 앞 키패드에 입력해보자.',
     code: '[IBM x RedHat] AI {{blank}} - AX Academy 8기',
-    answer: 'Transformation', digit: '00000000', // TODO: 실제 오리엔테이션 날짜(yyyymmdd)로 교체 필요
+    answer: 'Transformation', digit: '20260847',
     hint: '지금 듣고 있는 강의 이름 그대로예요.',
-    stage1SuccessMsg: '✓ 정답! 화면에 다음 문장이 떠오른다... "진짜 관문은 따로 있다."',
+    stage1SuccessMsg: '✓ 정답!',
     followUp: {
-      title: '문 앞의 마지막 관문', type: 'text',
-      subtext: '화면에 이어서 힌트가 떠 있다.',
-      prompt: 'AX Academy 8기의 첫 오리엔테이션을 진행했던 날짜는? (yyyy-mm-dd 형식이 아니라, 숫자 8자리만 순서대로 입력. 예: 20260305)',
-      answer: '00000000', // TODO: 실제 오리엔테이션 날짜(숫자 8자리, YYYYMMDD)로 교체 필요
-      hint: '오리엔테이션 날짜를 YYYYMMDD 형식의 숫자 8자리로만 입력해보자.'
+      title: '뒤이어 떠오른 창 하나', type: 'info',
+      subtext: '언제더라...?',
+      prompt: '[IBM x RedHat] AI Transformation - AX Academy 8기의 첫 오리엔테이션 날짜는?',
+      hint: '아까 빔프로젝터 화면에서 봤던 "+22"도 같이 떠올려보자.'
     }
   },
   p_locker: {
@@ -93,7 +106,7 @@ const PUZZLES = {
 
 /* ---------- 잠금(문/서랍) 데이터 ---------- */
 const LOCKS = {
-  classroomDoor: { require: ['p_board'], reward: { id: 'cardkey', name: '카드키', icon: '🔑' } },
+  classroomDoor: { require: ['p_board'], reward: null },
   elevatorCall: { require: ['p_callcode'], reward: null }
 };
 
@@ -106,24 +119,26 @@ const LOCKS = {
 const ROOMS = {
   classroom: {
     name: '본 강의실', desc: '5강의실. 야자 중 잠들었던 곳. 문이 잠겨 있다.',
-    connections: [ { label: '복도(좌)', dest: 'hallwayLeft', lockId: 'classroomDoor' } ],
+    connections: [ { label: '복도(좌)', dest: 'hallwayLeft', lockId: 'classroomDoor',
+      introImage: 'img/classroom-doorlock.png',
+      introLine: '뭐야, x발. 누가 여기에다 도어락을 설치해놨어?!' } ],
     background(s){ return s.projectorLit ? 'img/classroom-lit.png' : 'img/classroom.png'; },
     hotspots: [
       { kind: 'puzzle', id: 'p_board', label: '모니터 화면',
-        line: '저 모니터만 이상하게 켜져 있다. 화면에 낯익은 문구가 떠 있다.',
+        line: '내 모니터만 이상하게 켜져 있다. 화면에 뭔가 떠 있는데?',
         points: [[0,60.65],[0,84.63],[5.57,84.72],[2.6,86.39],[2.14,87.22],[2.34,88.52],[4.9,89.72],[8.44,89.54],[11.93,87.22],[11.67,85.65],[10.16,84.63],[17.19,84.26],[17.19,60.65]] },
       { kind: 'flavor', id: 'f_chair', label: '의자',
-        line: '누군가 앉아있던 것처럼, 의자가 살짝 돌아가 있다.',
-        lineFirst: '의자 밑에 뭔가 떨어져 있다. 손전등이다 — 꺼져 있었지만 아직 배터리가 남아있다.',
+        line: '누군가 앉아있던 것처럼, 의자가 살짝 돌아가 있어.',
+        lineFirst: '의자 밑에 뭔가 떨어져 있다. 손전등? 꺼져 있었지만 아직 배터리가 남아있어.',
         grantItem: { id: 'flashlight', name: '손전등', icon: '🔦' },
         points: [[82.24,67.59],[80.42,66.76],[76.51,67.13],[74.43,68.24],[72.71,70.46],[72.29,72.96],[73.18,80.28],[69.69,80.65],[70.26,82.59],[69.69,84.72],[69.32,97.04],[69.84,96.85],[70.57,83.61],[74.74,86.94],[72.97,87.87],[72.45,89.35],[72.97,99.91],[73.7,99.91],[73.12,89.81],[73.59,88.61],[74.64,88.24],[74.84,84.91],[81.56,84.44],[81.93,78.33],[83.33,70.93],[83.23,69.17]] },
       { kind: 'flavor', id: 'f_projector', label: '빔프로젝터 화면',
-        line: '빔프로젝터 화면엔 아무것도 비치지 않는다. 그저 하얗게 빛나고 있을 뿐.',
+        line: '화면에 뭔가가 적혀져 있는 것 같아. 하지만 어두워서 보이지 않아.',
         withItem: { requires: 'flashlight', setState: 'projectorLit',
-          line: '손전등을 비추자, 화면에 반응이 생기며 빛이 들어온다 — 구석에 "+22"라는 숫자가 옅게 떠오른다.' },
+          line: '손전등을 비추자 어둠에 가려져 있던 글자가 드러난다. +22라고 적혀있어.' },
         points: [[40.89,23.33],[41.56,25.46],[41.46,53.15],[59.06,53.15],[59.11,48.06],[64.11,48.06],[64.11,25.37],[64.69,23.33]] },
       { kind: 'flavor', id: 'f_ac', label: '에어컨',
-        line: '에어컨은 꺼져 있다. 정적만이 감돈다.',
+        line: '에어컨은 꺼져 있어.',
         points: [[46.77,17.13],[47.14,21.11],[47.5,21.48],[57.81,21.48],[59.48,17.59],[59.48,17.13]] }
     ]
   },

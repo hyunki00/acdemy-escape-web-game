@@ -9,8 +9,14 @@ function findHotspot(id){
   return (room.hotspots || []).find(h => h.id === id);
 }
 document.getElementById('sceneArt').addEventListener('click', (e) => {
+  // 대화창(대사)이나 이미지 팝업이 떠 있는 동안엔 다른 오브젝트와 상호작용할 수 없음
+  if (dialogueBar.classList.contains('show') || imagePopup.classList.contains('show')) return;
+
   const t = e.target.closest('[data-kind]');
   if (!t) return;
+  // 이 클릭이 sceneWrap까지 버블링되면, 방금 이 클릭으로 새로 연 대화를(있다면)
+  // "대화창 진행" 리스너가 같은 클릭에서 즉시 닫아버리므로 여기서 전파를 막는다.
+  e.stopPropagation();
   const kind = t.dataset.kind, id = t.dataset.id, dest = t.dataset.dest;
 
   // 장식용 상호작용 대사는 퍼즐이 없어 누를 때마다 항상 표시, 자유 이동 모드와도 무관
@@ -82,10 +88,18 @@ document.getElementById('sceneArt').addEventListener('click', (e) => {
 
 /* ---------- 방 이동 / 렌더링 ---------- */
 function goRoom(roomId){
-  state.currentRoom = roomId;
-  document.getElementById('navOverlay').classList.remove('show');
-  render();
-  if (roomId === 'elevatorInside' && !state.finished) finishGame();
+  playSound(document.getElementById('walkAudio'));
+  const sceneArt = document.getElementById('sceneArt');
+  sceneArt.classList.add('fade-out');
+  setTimeout(() => {
+    state.currentRoom = roomId;
+    document.getElementById('navOverlay').classList.remove('show');
+    render();
+    // 새 화면(불투명도 0)이 먼저 그려지고 난 다음 프레임에 클래스를 떼어내야
+    // 브라우저가 0 → 1로 자연스럽게 트랜지션(페이드인)한다.
+    requestAnimationFrame(() => sceneArt.classList.remove('fade-out'));
+    if (roomId === 'elevatorInside' && !state.finished) finishGame();
+  }, 500);
 }
 
 function render(){
@@ -104,7 +118,20 @@ function render(){
     const btn = document.createElement('button');
     btn.className = 'nav-btn' + (locked ? ' locked' : '');
     btn.textContent = (locked ? '🔒 ' : '→ ') + c.label;
-    btn.onclick = () => { locked ? openLock(c.lockId, c.dest) : goRoom(c.dest); };
+    btn.onclick = (e) => {
+      if (dialogueBar.classList.contains('show') || imagePopup.classList.contains('show')) return;
+      if (!locked){ goRoom(c.dest); return; }
+      if (c.introImage || c.introLine){
+        e.stopPropagation();
+        showImagePopup(c.introImage);
+        showDialogue(c.introLine || '', () => {
+          hideImagePopup();
+          openLock(c.lockId, c.dest);
+        });
+      } else {
+        openLock(c.lockId, c.dest);
+      }
+    };
     nav.appendChild(btn);
   });
 
@@ -137,5 +164,6 @@ function fitFrameWidth(){
 window.addEventListener('resize', fitFrameWidth);
 
 document.getElementById('moveToggleBtn').addEventListener('click', () => {
+  if (dialogueBar.classList.contains('show') || imagePopup.classList.contains('show')) return;
   document.getElementById('navOverlay').classList.toggle('show');
 });

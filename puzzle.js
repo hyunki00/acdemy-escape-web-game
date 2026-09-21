@@ -24,12 +24,12 @@ function getStageDef(p, stage){ return stage === 'followUp' ? p.followUp : p; }
 /* 한 단계를 맞혔을 때 다음으로 진행할지, 완전히 풀린 것으로 처리할지 결정 */
 function advanceStage(puzzleId, p, stage, fb){
   if (stage === 'main' && p.followUp){
-    fb.className = 'feedback ok';
+    fb.className = p.flavor ? 'feedback info' : 'feedback ok';
     fb.textContent = p.stage1SuccessMsg || '✓ 정답! 다음 단서로 넘어간다...';
     setTimeout(() => { openPuzzle(puzzleId, 'followUp'); }, 900);
   } else {
     markSolved(puzzleId);
-    fb.className = 'feedback ok';
+    fb.className = p.flavor ? 'feedback info' : 'feedback ok';
     fb.textContent = p.flavor ? (p.successMsg || '✓ 정답!') : `✓ 정답! 코드 조각 확보: ${p.digit}`;
     if (puzzleId === 'p_callcode') onCallCodeSolved();
     if (p.noDigit) onBreakerSolved();
@@ -56,10 +56,15 @@ function openPuzzle(puzzleId, stage){
     subText = def.subtext || '다음 질문에 답해보자.';
     bodyExtra = `<div class="choice-list">${def.prompt ? `<p class="choice-prompt">${def.prompt.replace(/\n/g, '<br>')}</p>` : ''}
       ${already ? '' : `<div class="answer-row">
-        <input id="outputInput" type="text" placeholder="정답 입력">
+        <input id="outputInput" type="text" placeholder="정답 입력" onkeydown="if(event.key==='Enter') checkOutput('${puzzleId}', '${stage}')">
         <button class="btn" onclick="checkOutput('${puzzleId}', '${stage}')">확인</button>
       </div>
       <div style="text-align:right;"><button class="btn secondary" onclick="showHint('${puzzleId}', '${stage}')">힌트</button></div>`}</div>`;
+  } else if (def.type === 'info'){
+    // 답을 직접 입력받지 않고, 정보/힌트만 보여준 뒤 확인 버튼으로 다음 단계로 넘어가는 타입
+    subText = def.subtext || '';
+    bodyExtra = `<div class="choice-list">${def.prompt ? `<p class="choice-prompt">${def.prompt.replace(/\n/g, '<br>')}</p>` : ''}
+      ${already ? '' : `<div style="text-align:right;"><button class="btn" onclick="checkInfo('${puzzleId}', '${stage}')">확인</button></div>`}</div>`;
   } else {
     let codeHtml = def.code.replace(/\n/g, '<br>');
     if (def.type === 'blank'){
@@ -70,14 +75,14 @@ function openPuzzle(puzzleId, stage){
     const checkFn = def.type === 'blank' ? 'checkBlank' : 'checkOutput';
     bodyExtra = `<div class="code-box">${codeHtml}</div>
        ${already ? '' : `<div class="answer-row">
-         <input id="${inputId}" type="text" placeholder="${def.type === 'blank' ? '빈칸에 들어갈 답' : '정답 입력'}">
+         <input id="${inputId}" type="text" placeholder="${def.type === 'blank' ? '빈칸에 들어갈 답' : '정답 입력'}" onkeydown="if(event.key==='Enter') ${checkFn}('${puzzleId}', '${stage}')">
          <button class="btn" onclick="${checkFn}('${puzzleId}', '${stage}')">확인</button>
        </div>
        <div style="text-align:right;"><button class="btn secondary" onclick="showHint('${puzzleId}', '${stage}')">힌트</button></div>`}`;
   }
 
   const successNote = already
-    ? `<p class="feedback ok">✓ 이미 확인했어요. ${p.flavor ? '' : `코드 조각: <strong>${p.digit}</strong>`}</p>`
+    ? `<p class="feedback ${p.flavor ? 'info' : 'ok'}">✓ 이미 확인했어요. ${p.flavor ? '' : `코드 조각: <strong>${p.digit}</strong>`}</p>`
     : `<div id="puzzleFeedback" class="feedback"></div>`;
 
   openModal(`
@@ -138,4 +143,10 @@ function checkChoice(puzzleId, idx, stage){
     fb.className = 'feedback bad';
     fb.textContent = '음... 다시 생각해보자.';
   }
+}
+function checkInfo(puzzleId, stage){
+  stage = stage || 'main';
+  const p = PUZZLES[puzzleId];
+  const fb = document.getElementById('puzzleFeedback');
+  advanceStage(puzzleId, p, stage, fb);
 }

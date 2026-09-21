@@ -56,7 +56,7 @@ function restartGame(){
   state.power = false;
   state.startTime = Date.now();
   state.finished = false;
-  document.getElementById('invItems').innerHTML = '';
+  renderInventorySlots();
   closeModal();
   render();
 }
@@ -76,4 +76,5 @@ function finishGame(){
 }
 
 /* ---------- 시작 ---------- */
+renderInventorySlots();
 render();

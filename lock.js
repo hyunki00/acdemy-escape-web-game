@@ -3,50 +3,53 @@
    문/서랍 잠금 해제(키패드)와 엘리베이터 전원·호출 처리를 담당합니다.
 =========================================================== */
 
-/* ---------- 잠금(문/서랍) 모달 : 체크리스트 + 키패드 ---------- */
+/* ---------- 잠금(문/서랍) 모달 : 도어락 키패드 ---------- */
 function openLock(lockId, destRoom){
   const lock = LOCKS[lockId];
   if (state.unlocked[lockId]){
     if (destRoom) goRoom(destRoom);
     return;
   }
-  const items = lock.require.map(pid => {
-    const p = PUZZLES[pid];
-    const done = !!state.solved[pid];
-    return `<li><span class="dot ${done ? 'on' : ''}"></span>${p.title} ${done ? `— 조각 ${p.digit}` : '(미확인)'}</li>`;
-  }).join('');
-  const allDone = lockSolved(lockId);
+  const codeLength = lockCode(lockId).length;
+  const title = lock.title || LOCK_TEXT.title;
+  const subtext = lock.subtext
+    ? (typeof lock.subtext === 'function' ? lock.subtext(codeLength) : lock.subtext)
+    : LOCK_TEXT.subtext(codeLength);
   openModal(`
-    <h3>잠긴 문</h3>
-    <p class="sub">필요한 단서를 모두 모으면 비밀번호를 입력할 수 있어요.</p>
-    <ul class="checklist">${items}</ul>
-    ${allDone ? `
-      <div class="keypad-display" id="keypadDisplay">${'_'.repeat(lockCode(lockId).length)}</div>
-      <div class="keypad-grid" id="keypadGrid"></div>
-      <div id="lockFeedback" class="feedback" style="margin-top:8px;"></div>
-    ` : `<p class="feedback bad">아직 단서가 부족해요. 방을 더 둘러보세요.</p>`}
-  `);
-  if (allDone){
-    window.__lockCtx = { lockId, destRoom, entered: '' };
-    buildKeypad();
-  }
+    <h3>${title}</h3>
+    <p class="sub">${subtext}</p>
+    <div class="keypad-display" id="keypadDisplay">${'_'.repeat(codeLength)}</div>
+    <div class="keypad-grid" id="keypadGrid"></div>
+    <div id="lockFeedback" class="feedback" style="margin-top:8px;"></div>
+  `, 'lock-modal');
+  window.__lockCtx = { lockId, destRoom, entered: '' };
+  buildKeypad();
 }
 function buildKeypad(){
   const grid = document.getElementById('keypadGrid');
   grid.innerHTML = '';
-  const make = (label) => {
+  const make = (label, extraClass) => {
     const b = document.createElement('button');
-    b.className = 'key'; b.textContent = label;
+    b.className = 'key' + (extraClass ? ' ' + extraClass : ''); b.textContent = label;
     b.onclick = () => keypadPress(label);
     return b;
   };
   for (let n = 1; n <= 9; n++) grid.appendChild(make(String(n)));
-  grid.appendChild(make('C'));
+  grid.appendChild(make('C', 'key-clear'));
   grid.appendChild(make('0'));
-  grid.appendChild(make('⌫'));
+  grid.appendChild(make('⌫', 'key-back'));
+}
+function playSound(el){
+  if (!el) return;
+  el.currentTime = 0;
+  const p = el.play();
+  if (p && p.catch) p.catch(() => {});
 }
 function keypadPress(label){
+  playSound(document.getElementById('doorlockBeepAudio'));
+
   const ctx = window.__lockCtx;
+  const lock = LOCKS[ctx.lockId];
   const target = lockCode(ctx.lockId);
   if (label === 'C') ctx.entered = '';
   else if (label === '⌫') ctx.entered = ctx.entered.slice(0, -1);
@@ -56,15 +59,16 @@ function keypadPress(label){
     const fb = document.getElementById('lockFeedback');
     if (ctx.entered === target){
       state.unlocked[ctx.lockId] = true;
-      const lock = LOCKS[ctx.lockId];
       if (lock.reward) addInventory(lock.reward);
+      playSound(document.getElementById('doorlockOpenAudio'));
       fb.className = 'feedback ok';
-      fb.textContent = `✓ 열렸다! ${lock.reward ? lock.reward.name + ' 획득' : ''}`;
+      fb.textContent = lock.reward ? `${lock.success || LOCK_TEXT.success} ${lock.reward.name} 획득` : (lock.success || LOCK_TEXT.success);
       render();
       setTimeout(() => { closeModal(); if (ctx.destRoom) goRoom(ctx.destRoom); }, 700);
     } else {
+      playSound(document.getElementById('doorlockWrongAudio'));
       fb.className = 'feedback bad';
-      fb.textContent = '틀렸어요. 다시 시도해보세요.';
+      fb.textContent = lock.wrong || LOCK_TEXT.wrong;
       setTimeout(() => { ctx.entered = ''; document.getElementById('keypadDisplay').textContent = '_'.repeat(target.length); }, 400);
     }
   }

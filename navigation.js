@@ -24,10 +24,12 @@ document.getElementById('sceneArt').addEventListener('click', (e) => {
     const hs = findHotspot(id);
     if (!hs){ showDialogue(''); return; }
 
-    // 1) 특정 아이템(들)을 보유했을 때만 나오는 1회성 대사 (+ 사이드이펙트: 퍼즐 오픈, 전원 복구 등)
+    // 1) 특정 아이템(들)을 보유했을 때만 나오는 대사 (+ 사이드이펙트: 퍼즐 오픈, 전원 복구 등)
     if (hs.withItem){
       const need = Array.isArray(hs.withItem.requires) ? hs.withItem.requires : [hs.withItem.requires];
       const hasAll = need.every(itemId => hasItem(itemId));
+      const stateAlreadySet = hs.withItem.setState && state[hs.withItem.setState];
+
       if (hasAll && !state.seenDialogue['with_' + id]){
         state.seenDialogue['with_' + id] = true;
         // setState는 배경 교체처럼 "즉시 눈에 보여야" 자연스러운 변화라, 대사가 뜨는 것과 동시에 바로 반영
@@ -36,6 +38,12 @@ document.getElementById('sceneArt').addEventListener('click', (e) => {
           if (hs.withItem.opensPuzzle) openPuzzle(hs.withItem.opensPuzzle);
           if (hs.withItem.setPower) onBreakerSolved();
         });
+        return;
+      }
+      // setState로 인한 변화(예: 배경이 바뀐 상태)가 이미 영구적으로 적용돼 있다면,
+      // 그 이후로 다시 클릭해도 "밝히기 전" 대사로 되돌아가지 않고 이 대사가 계속 나옴
+      if (stateAlreadySet){
+        showDialogue(hs.withItem.line);
         return;
       }
     }
@@ -75,11 +83,15 @@ document.getElementById('sceneArt').addEventListener('click', (e) => {
   }
   if (kind === 'puzzle'){
     const hs = findHotspot(id);
+    const p = PUZZLES[id];
+    // 이미 완전히 풀린 2단계 체인 퍼즐은, 다시 열 때 1단계(예: 빈칸 문제)가 아니라
+    // 항상 2단계(followUp, 예: 날짜 질문)로 바로 열리게 함 — 1단계는 한 번 풀면 다시 안 나옴
+    const openStage = (state.solved[id] && p && p.followUp) ? 'followUp' : 'main';
     if (hs && hs.line && !state.seenDialogue[id]){
       state.seenDialogue[id] = true;
-      showDialogue(hs.line, () => openPuzzle(id));
+      showDialogue(hs.line, () => openPuzzle(id, openStage));
     } else {
-      openPuzzle(id);
+      openPuzzle(id, openStage);
     }
   }
   else if (kind === 'lock') openLock(id, dest || undefined);

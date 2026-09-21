@@ -33,6 +33,9 @@ function advanceStage(puzzleId, p, stage, fb){
     fb.textContent = p.flavor ? (p.successMsg || '✓ 정답!') : `✓ 정답! 코드 조각 확보: ${p.digit}`;
     if (puzzleId === 'p_callcode') onCallCodeSolved();
     if (p.noDigit) onBreakerSolved();
+    // 완료 메시지를 잠깐 보여준 뒤 모달을 자동으로 닫음(이전 화면 위에 메시지만 얹힌 채
+    // 계속 떠 있던 문제 방지). 다시 열면 openPuzzle이 "이미 확인함" 상태로 깔끔하게 그려줌.
+    setTimeout(() => { closeModal(); }, 900);
   }
 }
 
@@ -90,7 +93,7 @@ function openPuzzle(puzzleId, stage){
     <p class="sub">${subText}</p>
     ${bodyExtra}
     ${successNote}
-  `);
+  `, def.type === 'info' ? 'modal-narrow' : undefined);
 }
 function showHint(puzzleId, stage){
   const p = PUZZLES[puzzleId];

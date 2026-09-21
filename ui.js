@@ -32,6 +32,16 @@ function showImagePopup(src){
 }
 function hideImagePopup(){ imagePopup.classList.remove('show'); }
 
+/* 오브젝트 상호작용 효과음 공용 재생기 — hotspot.sound에 적힌 경로를 그때그때 넣어 재생 */
+const sfxAudio = document.getElementById('sfxAudio');
+function playSfx(src){
+  if (!src || !sfxAudio) return;
+  sfxAudio.src = src;
+  sfxAudio.currentTime = 0;
+  const p = sfxAudio.play();
+  if (p && p.catch) p.catch(() => {});
+}
+
 /* ---------- 상호작용 대사 ----------
    사물 클릭 → 하단에 대사 표시. 시간이 지나면 자동으로 넘어가는 게 아니라,
    화면(대화바)을 클릭해야 다음 줄로 넘어가거나(뒤에 줄이 더 있으면) 닫힙니다(마지막 줄이면).

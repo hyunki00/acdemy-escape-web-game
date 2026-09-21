@@ -23,6 +23,7 @@ document.getElementById('sceneArt').addEventListener('click', (e) => {
   if (kind === 'flavor'){
     const hs = findHotspot(id);
     if (!hs){ showDialogue(''); return; }
+    if (hs.sound) playSfx(hs.sound);
 
     // 1) 특정 아이템(들)을 보유했을 때만 나오는 대사 (+ 사이드이펙트: 퍼즐 오픈, 전원 복구 등)
     if (hs.withItem){

@@ -20,6 +20,16 @@ function tryPlayBgm(){
 }
 tryPlayBgm();
 
+/* ---------- 마스터 볼륨/음소거 (게임 안의 모든 <audio>에 공통 적용) ---------- */
+let masterVolume = 0.5;
+function applyVolume(v){
+  masterVolume = Number(v);
+  document.querySelectorAll('audio').forEach(el => { el.volume = masterVolume; });
+  const label = document.getElementById('volumeLabel');
+  if (label) label.textContent = Math.round(masterVolume * 100) + '%';
+}
+applyVolume(masterVolume);
+
 /* ---------- 타이머 ---------- */
 setInterval(() => {
   if (state.finished) return;
@@ -33,8 +43,15 @@ setInterval(() => {
 document.getElementById('settingsBtn').addEventListener('click', () => {
   openModal(`
     <h3>설정</h3>
-    <p class="sub">배경음악을 켜고 끌 수 있어요</p>
-    <div style="display:flex; flex-direction:column; gap:10px;">
+    <p class="sub">배경음악·효과음 볼륨을 조절할 수 있어요</p>
+    <div style="display:flex; flex-direction:column; gap:14px;">
+      <div>
+        <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:var(--text-muted); margin-bottom:4px;">
+          <span>🔊 볼륨</span>
+          <span id="volumeLabel">${Math.round(masterVolume * 100)}%</span>
+        </div>
+        <input type="range" min="0" max="1" step="0.05" value="${masterVolume}" oninput="applyVolume(this.value)" style="width:100%;">
+      </div>
       <button class="btn secondary" onclick="toggleMute(this)">${bgmAudio.muted ? '🔇 음소거 중 (클릭해서 켜기)' : '🔈 음소거'}</button>
       <button class="btn secondary" onclick="closeModal()">힌트는 각 퍼즐 창의 '힌트' 버튼을 확인하세요</button>
       <button class="btn" onclick="restartGame()">처음부터 다시 시작</button>
@@ -42,8 +59,9 @@ document.getElementById('settingsBtn').addEventListener('click', () => {
   `);
 });
 function toggleMute(btn){
-  bgmAudio.muted = !bgmAudio.muted;
-  btn.textContent = bgmAudio.muted ? '🔇 음소거 중 (클릭해서 켜기)' : '🔈 음소거';
+  const muted = !bgmAudio.muted;
+  document.querySelectorAll('audio').forEach(el => { el.muted = muted; });
+  btn.textContent = muted ? '🔇 음소거 중 (클릭해서 켜기)' : '🔈 음소거';
 }
 
 /* ---------- 리셋 ---------- */

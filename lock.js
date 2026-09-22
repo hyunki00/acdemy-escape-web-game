@@ -62,7 +62,8 @@ function keypadPress(label){
     if (ctx.entered === target){
       state.unlocked[ctx.lockId] = true;
       if (lock.reward) addInventory(lock.reward);
-      playSound(document.getElementById('doorlockOpenAudio'));
+      if (lock.openSound) playSfx(lock.openSound);
+      else playSound(document.getElementById('doorlockOpenAudio'));
       fb.className = 'feedback ok';
       fb.textContent = lock.reward ? `${lock.success || LOCK_TEXT.success} ${lock.reward.name} 획득` : (lock.success || LOCK_TEXT.success);
       render();
@@ -126,7 +127,8 @@ function comboCheck(){
   if (entered === target){
     state.unlocked[ctx.lockId] = true;
     if (lock.reward) addInventory(lock.reward);
-    playSound(document.getElementById('doorlockOpenAudio'));
+    if (lock.openSound) playSfx(lock.openSound);
+    else playSound(document.getElementById('doorlockOpenAudio'));
     fb.className = 'feedback ok';
     fb.textContent = lock.reward ? `${lock.success || LOCK_TEXT.success} ${lock.reward.name} 획득` : (lock.success || LOCK_TEXT.success);
     render();

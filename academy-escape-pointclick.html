@@ -286,6 +286,27 @@
     display:block; max-width:min(60vw, 320px); max-height:46vh; width:auto;
     border-radius:12px; box-shadow:0 25px 60px rgba(0,0,0,0.7); border:2px solid rgba(255,255,255,0.12);
   }
+
+  /* ---------- 아이템 획득 팝업 (화면 중앙에 크게, 잠깐 떴다가 자동으로 사라짐) ---------- */
+  .item-popup{
+    position:fixed; top:42%; left:50%; transform:translate(-50%,-50%) scale(0.85);
+    z-index:96; opacity:0; pointer-events:none; transition:opacity .3s ease, transform .3s ease;
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+  }
+  .item-popup.show{ opacity:1; transform:translate(-50%,-50%) scale(1); }
+  .item-popup-icon{
+    width:140px; height:140px; border-radius:16px;
+    background:linear-gradient(160deg, #6b3a30 0%, #4a241d 55%, #3a1a15 100%);
+    border:2px solid rgba(233,201,168,0.3);
+    box-shadow:0 0 0 1.5px rgba(111,195,255,0.5), 0 0 40px rgba(111,195,255,0.35), 0 25px 50px rgba(0,0,0,0.6);
+    display:flex; align-items:center; justify-content:center; font-size:4rem;
+  }
+  .item-popup-icon img{ width:78%; height:78%; object-fit:contain; }
+  .item-popup-name{
+    color:#e8edf3; font-family:var(--font-mono); font-weight:bold; font-size:1.1rem;
+    text-shadow:0 0 10px rgba(111,195,255,0.6); background:rgba(10,13,20,0.75);
+    padding:6px 16px; border-radius:20px; border:1px solid rgba(111,195,255,0.3);
+  }
   .choice-prompt{ font-size:1rem; line-height:1.75; color:#e8edf3; margin:0 0 16px; }
   .choice-btn{
     display:block; width:100%; text-align:left; margin-bottom:10px;
@@ -328,11 +349,46 @@
     margin:14px 0;
     -webkit-user-select:none; user-select:none;
   }
+  .hold-answer-text{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:1.6rem; font-weight:bold; color:#ff2b3d;
+    text-shadow:0 0 12px rgba(255,40,60,0.7), 0 0 3px rgba(255,40,60,0.9);
+    pointer-events:none; -webkit-user-select:none; user-select:none;
+  }
   .hold-canvas{ position:absolute; inset:0; width:100%; height:100%; display:block; touch-action:none; }
   .hold-label{
     position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
     color:#8aa0c0; font-size:0.9rem; pointer-events:none; transition:opacity .25s ease;
   }
+
+  /* ---------- 차단기함(breakerbox) — 9개 차단기 + 12개 전선 ---------- */
+  .breaker-grid{
+    display:grid;
+    grid-template-columns:56px 30px 56px 30px 56px;
+    grid-template-rows:56px 30px 56px 30px 56px;
+    justify-content:center; margin:12px auto; gap:0;
+  }
+  .breaker-btn{
+    width:56px; height:56px; border-radius:10px; place-self:center;
+    background:linear-gradient(160deg, #1a1b20, #0d0e12);
+    border:1.5px solid rgba(255,255,255,0.15); color:#5a6272;
+    font-size:1.6rem; cursor:pointer; transition:all .15s ease;
+  }
+  .breaker-btn:hover:not(:disabled){ border-color:rgba(111,195,255,0.5); color:#7fc4ff; }
+  .breaker-btn.active{
+    background:linear-gradient(160deg, #234a7a, #142a45);
+    border-color:#6fc3ff; color:#a8dcff;
+    box-shadow:0 0 16px rgba(111,195,255,0.55);
+  }
+  .breaker-btn.broken{
+    background:repeating-linear-gradient(45deg, #1a1214, #1a1214 4px, #241618 4px, #241618 8px);
+    border-color:rgba(255,80,80,0.35); color:#7a4040; cursor:not-allowed;
+  }
+  .breaker-spacer{ width:100%; height:100%; }
+  .wire{ place-self:center; background:#23262e; transition:background .15s ease, box-shadow .15s ease; }
+  .wire-h{ width:30px; height:10px; border-radius:5px; }
+  .wire-v{ width:10px; height:30px; border-radius:5px; }
+  .wire.lit{ background:#ffb545; box-shadow:0 0 12px rgba(255,181,69,0.75); }
 </style>
 </head>
 <body>
@@ -379,6 +435,11 @@
 
 <div class="image-popup" id="imagePopup">
   <img id="imagePopupImg" src="" alt="">
+</div>
+
+<div class="item-popup" id="itemPopup">
+  <div class="item-popup-icon" id="itemPopupIcon"></div>
+  <div class="item-popup-name" id="itemPopupName"></div>
 </div>
 
 <script src="draw.js"></script>

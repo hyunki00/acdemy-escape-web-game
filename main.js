@@ -22,9 +22,25 @@ tryPlayBgm();
 
 /* ---------- 마스터 볼륨/음소거 (게임 안의 모든 <audio>에 공통 적용) ---------- */
 let masterVolume = 0.5;
+/* 효과음(BGM 제외) 전체에 적용할 기본 배율. 특정 파일만 다르게 주고 싶으면
+   SFX_VOLUME_OVERRIDES에 'Sound/파일명.mp3': 배율 형태로 추가하면 그 사운드만 재정의됨. */
+const SFX_VOLUME_MULTIPLIER = 1.3;
+const SFX_VOLUME_OVERRIDES = {
+  'Sound/glass-break.mp3': 0.8
+};
+function sfxVolumeFor(src){
+  const mult = (src && SFX_VOLUME_OVERRIDES[src] != null) ? SFX_VOLUME_OVERRIDES[src] : SFX_VOLUME_MULTIPLIER;
+  return Math.min(1, Math.max(0, masterVolume * mult));
+}
+const BGM_VOLUME_MULTIPLIER = 0.8;
 function applyVolume(v){
   masterVolume = Number(v);
-  document.querySelectorAll('audio').forEach(el => { el.volume = masterVolume; });
+  document.querySelectorAll('audio').forEach(el => {
+    // BGM은 자체 배율, 나머지 효과음은 SFX 배율(+개별 오버라이드) 적용
+    el.volume = (el.id === 'bgmAudio')
+      ? Math.min(1, Math.max(0, masterVolume * BGM_VOLUME_MULTIPLIER))
+      : sfxVolumeFor(el.getAttribute('src'));
+  });
   const label = document.getElementById('volumeLabel');
   if (label) label.textContent = Math.round(masterVolume * 100) + '%';
 }

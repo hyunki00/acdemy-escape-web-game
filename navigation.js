@@ -6,7 +6,7 @@
 /* ---------- 씬 클릭 위임 ---------- */
 function findHotspot(id){
   const room = ROOMS[state.currentRoom];
-  return (room.hotspots || []).find(h => h.id === id);
+  return (room.hotspots || []).find(h => h.id === id && (!h.showIf || h.showIf(state)));
 }
 document.getElementById('sceneArt').addEventListener('click', (e) => {
   // 대화창(대사)이나 이미지 팝업이 떠 있는 동안엔 다른 오브젝트와 상호작용할 수 없음
@@ -100,6 +100,11 @@ document.getElementById('sceneArt').addEventListener('click', (e) => {
   }
   else if (kind === 'lock'){
     const hs = findHotspot(id);
+    const lock = LOCKS[id];
+    if (lock && lock.requiresPower && !state.power){
+      showDialogue(lock.offLine || '전원이 꺼져 있어 반응이 없다.');
+      return;
+    }
     if (hs && hs.line && !state.seenDialogue[id]){
       state.seenDialogue[id] = true;
       showDialogue(hs.line, () => openLock(id, dest || undefined));

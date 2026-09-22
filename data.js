@@ -102,6 +102,7 @@ const PUZZLES = {
     revealText: '신지원',
     hint: '손수건으로 뽀득뽀득 문질러서 닦아보자.',
     successMsg: '✓ 흐릿하게 적혀 있던 이름이 드러난다.',
+    completeSound: 'Sound/glass-break.mp3',
     grantItem: { id: 'rustykey', name: '녹슨 열쇠', icon: '🔑', image: 'img/item-rustykey.png' }
   },
   p_extinguisher: {
@@ -117,10 +118,11 @@ const PUZZLES = {
     hint: '삼항 연산자의 조건을 따라가 보세요.'
   },
   p_breaker: {
-    title: '차단기함 - 전원 복구', type: 'blank', noDigit: true,
-    code: 'let power = 0;\n{{blank}}\nconsole.log(power);',
-    answer: ['power += 100', 'power = power + 100'],
-    hint: 'power에 100을 더해서 대입하려면? — power += 100; 이든 power = power + 100; 이든 다 정답이에요.'
+    title: '차단기함', type: 'breakerbox', noDigit: true,
+    subtext: '차단기 버튼을 눌러서 주변 배선에 불을 켜보자. 모든 배선에 불이 들어와야 한다.',
+    brokenBreakers: [0, 4, 8], // 좌상단, 중앙, 우하단 — 3개 고장. 이 3개를 안 눌러도 항상 풀 수 있음
+    hint: '고장난 버튼(어두운 버튼)은 신경 쓰지 말고, 네 방향 가장자리 중간 버튼들만 눌러보자.',
+    successMsg: '✓ 딸깍! 모든 배선에 불이 들어왔다.'
   },
   p_callcode: {
     title: '호출 패널 - 마지막 메시지', type: 'choice',
@@ -134,7 +136,8 @@ const PUZZLES = {
 /* ---------- 잠금(문/서랍) 데이터 ---------- */
 const LOCKS = {
   classroomDoor: { require: ['p_board'], reward: null },
-  elevatorCall: { require: ['p_callcode'], reward: null },
+  elevatorCall: { require: ['p_callcode'], reward: null, requiresPower: true,
+    offLine: '전원이 꺼져 있어 반응이 없다.', openSound: 'Sound/elevator-ding.wav' },
   // 스터디룸 상자 — 회전 다이얼(콤보락) 스타일. code/문구는 전부 임시이니 나중에 실제 값으로 교체.
   studyBox: {
     code: '7878', style: 'combo',
@@ -235,14 +238,16 @@ const ROOMS = {
       { kind: 'flavor', id: 'f_cabinet', label: '벽면 캐비닛',
         showIf: s => !s.solved.p_restroom,
         line: '작은 벽면 캐비닛이다. 손잡이를 당겨봐도 잠겨서 열리지 않는다.',
-        withItem: { requires: 'rustykey', removeItem: 'rustykey', sound: 'Sound/cabinet-sfx.mp3',
-          line: '(임시 대사) 녹슨 열쇠를 넣고 돌리자 캐비닛이 열렸다.' },
         points: [[63.59,44.07],[63.54,53.61],[64.95,53.89],[67.86,53.7],[67.97,52.69],[67.92,44.07]] },
       { kind: 'flavor', id: 'f_cabinet', label: '벽면 캐비닛',
-        showIf: s => s.solved.p_restroom,
+        showIf: s => s.solved.p_restroom && !s.cabinetOpen,
         line: '작은 벽면 캐비닛이다. 손잡이를 당겨봐도 잠겨서 열리지 않는다.',
-        withItem: { requires: 'rustykey', removeItem: 'rustykey', sound: 'Sound/cabinet-sfx.mp3',
-          line: '(임시 대사) 녹슨 열쇠를 넣고 돌리자 캐비닛이 열렸다.' },
+        withItem: { requires: 'rustykey', removeItem: 'rustykey', setState: 'cabinetOpen', sound: 'Sound/cabinet-sfx.mp3',
+          line: '(임시 대사) 녹슨 열쇠를 넣고 돌리자 캐비닛이 열렸다. 안에 낡은 차단기함이 보인다.' },
+        points: [[63.96,44.07],[63.85,44.44],[63.91,53.8],[64.17,53.98],[68.28,53.8],[68.39,53.61],[68.44,49.91],[68.39,44.17],[68.23,43.98]] },
+      { kind: 'puzzle', id: 'p_breaker', label: '차단기함',
+        showIf: s => s.cabinetOpen,
+        line: '캐비닛 안에 낡은 차단기함이 있다. 전원을 복구할 수 있을 것 같다.',
         points: [[63.96,44.07],[63.85,44.44],[63.91,53.8],[64.17,53.98],[68.28,53.8],[68.39,53.61],[68.44,49.91],[68.39,44.17],[68.23,43.98]] },
       { kind: 'flavor', id: 'f_stalls', label: '화장실 칸막이',
         line: '칸막이 문들이 전부 닫혀 있다. 안에는 아무도 없는 것 같다.',
@@ -296,7 +301,7 @@ const ROOMS = {
       { label: '복도(우)', dest: 'hallwayRight' },
       { label: '화장실', dest: 'restroom' }
     ],
-    background: 'img/elevator-front.png',
+    background(s){ return s.power ? 'img/elevator-front-powered.png' : 'img/elevator-front.png'; },
     hotspots: [
       { kind: 'lock', id: 'elevatorCall', dest: 'elevatorInside', label: '엘리베이터 문',
         points: [[39.74,0.0],[19.84,0.0],[22.6,99.91],[29.38,99.91],[34.53,92.59],[40.94,93.33],[41.46,92.5]] },

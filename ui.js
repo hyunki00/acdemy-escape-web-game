@@ -32,11 +32,34 @@ function showImagePopup(src){
 }
 function hideImagePopup(){ imagePopup.classList.remove('show'); }
 
+/* ---------- 아이템 획득 팝업 — 화면 중앙에 크게 떴다가 잠시 후 자동으로 사라짐 ---------- */
+const itemPopup = document.getElementById('itemPopup');
+const itemPopupIcon = document.getElementById('itemPopupIcon');
+const itemPopupName = document.getElementById('itemPopupName');
+let _itemPopupTimer = null;
+function showItemPopup(item){
+  if (!item) return;
+  itemPopupIcon.innerHTML = '';
+  if (item.image){
+    const img = document.createElement('img');
+    img.src = item.image;
+    img.alt = item.name;
+    itemPopupIcon.appendChild(img);
+  } else {
+    itemPopupIcon.textContent = item.icon || '';
+  }
+  itemPopupName.textContent = item.name || '';
+  itemPopup.classList.add('show');
+  if (_itemPopupTimer) clearTimeout(_itemPopupTimer);
+  _itemPopupTimer = setTimeout(() => { itemPopup.classList.remove('show'); }, 1700);
+}
+
 /* 오브젝트 상호작용 효과음 공용 재생기 — hotspot.sound에 적힌 경로를 그때그때 넣어 재생 */
 const sfxAudio = document.getElementById('sfxAudio');
 function playSfx(src){
   if (!src || !sfxAudio) return;
   sfxAudio.src = src;
+  if (typeof sfxVolumeFor === 'function') sfxAudio.volume = sfxVolumeFor(src);
   sfxAudio.currentTime = 0;
   const p = sfxAudio.play();
   if (p && p.catch) p.catch(() => {});

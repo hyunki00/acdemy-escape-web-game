@@ -43,6 +43,8 @@ function addInventory(item){
   if (hasItem(item.id)) return;
   state.inventory.push(item);
   fillNextSlot(item);
+  showItemPopup(item);
+  playSfx('Sound/item-pickup.mp3');
 }
 
 /* 쓸모를 다한 아이템을 인벤토리에서 제거하고, 남은 아이템들로 슬롯을 다시 채움 */

@@ -218,7 +218,9 @@ function deskChairDeco(x,y){
 =========================================================== */
 function renderImageScene(room, state){
   const bg = typeof room.background === 'function' ? room.background(state) : room.background;
-  const shapesHtml = (room.hotspots || []).map(h => {
+  const shapesHtml = (room.hotspots || [])
+    .filter(h => !h.showIf || h.showIf(state))
+    .map(h => {
     let solved = false;
     if (h.kind === 'puzzle') solved = !!state.solved[h.id];
     if (h.kind === 'lock') solved = !!state.unlocked[h.id];

@@ -133,28 +133,50 @@
   }
   .nav-btn.locked{ background:rgba(216,222,230,0.9); color:var(--text-muted); }
 
-  #moveToggleWrap{ padding:10px 14px; background:var(--slate-lt); flex-shrink:0; }
   #moveToggleBtn{
-    width:100%; background:var(--navy); color:var(--white); border:none; border-radius:10px;
-    padding:10px 0; font-size:0.88rem; font-family:var(--font-body); cursor:pointer;
+    background-image:url('img/ui-move-btn.png'); background-size:100% 100%; background-repeat:no-repeat;
+    background-color:transparent; -webkit-appearance:none; appearance:none;
+    border:none; outline:none; width:190px; height:56px; flex-shrink:0;
+    color:#cfe3ff; font-weight:bold; letter-spacing:1px;
+    font-size:0.95rem; font-family:var(--font-body); cursor:pointer;
   }
+  #moveToggleBtn:hover{ filter:brightness(1.15); }
 
-  /* ---------- 인벤토리 바 ---------- */
+  /* ---------- 인벤토리 바 (이동 버튼과 한 줄) ---------- */
   #invbar{
-    background:var(--navy); display:flex; align-items:center; gap:12px;
-    padding:14px 18px; min-height:76px; flex-shrink:0; flex-wrap:wrap;
+    background-image:url('img/ui-bottom-bar-bg.png'); background-size:cover; background-position:center;
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    padding:14px 22px; min-height:84px; flex-shrink:0;
   }
-  #invbar .lbl{ font-size:0.72rem; letter-spacing:1.5px; color:var(--amber); text-transform:uppercase; margin-right:6px; }
+  .invbar-left{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; min-width:0; }
+  #invbar .lbl{
+    font-size:1.05rem; font-family:var(--font-mono); font-weight:bold; letter-spacing:2px;
+    color:#6fc3ff; text-shadow:0 0 8px rgba(111,195,255,0.6); text-transform:uppercase;
+    margin-right:8px; flex-shrink:0;
+  }
   .inv-item{
-    width:48px; height:48px; border-radius:9px;
-    background:rgba(255,255,255,0.05);
-    border:1.5px dashed rgba(255,255,255,0.18);
+    width:52px; height:52px; border-radius:10px;
+    background-image:url('img/ui-item-slot.png'); background-size:100% 100%; background-repeat:no-repeat;
+    box-shadow:0 0 0 1px rgba(111,195,255,0.25), 0 0 8px rgba(111,195,255,0.12);
     display:flex; align-items:center; justify-content:center; font-size:1.5rem;
+    transition:box-shadow .15s ease;
   }
   .inv-item:not(.empty){
-    background:linear-gradient(160deg, var(--amber), #d98a1f);
-    box-shadow:0 2px 6px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.15);
-    border:1.5px solid transparent;
+    box-shadow:0 0 0 1.5px rgba(111,195,255,0.9), 0 0 16px rgba(111,195,255,0.55);
+  }
+  .inv-item img{ width:78%; height:78%; object-fit:contain; }
+  .inv-item{ position:relative; }
+  .inv-item:not(.empty):hover::after{
+    content: attr(data-tooltip);
+    position:absolute; bottom:calc(100% + 10px); left:50%; transform:translateX(-50%);
+    width:max-content; max-width:220px;
+    background:#0d0e12; color:#e8edf3; border:1px solid rgba(111,195,255,0.35);
+    padding:7px 11px; border-radius:7px; font-size:0.78rem; line-height:1.4;
+    box-shadow:0 8px 20px rgba(0,0,0,0.55); z-index:60; pointer-events:none;
+  }
+  .inv-item:not(.empty):hover::before{
+    content:''; position:absolute; bottom:calc(100% + 3px); left:50%; transform:translateX(-50%);
+    border:6px solid transparent; border-top-color:#0d0e12; z-index:60; pointer-events:none;
   }
 
   /* ---------- 모달 ---------- */
@@ -165,14 +187,16 @@
   }
   .overlay.show{ opacity:1; pointer-events:auto; }
   .modal{
-    background:var(--white); border-radius:14px; padding:26px 24px;
+    background:linear-gradient(160deg, #1c1d22, #0d0e11);
+    border:1px solid rgba(120,170,255,0.14);
+    border-radius:14px; padding:26px 24px;
     width:100%; max-width:min(640px, 92vw); max-height:88vh; overflow-y:auto;
-    box-shadow:0 20px 60px rgba(0,0,0,0.5); position:relative;
+    box-shadow:0 20px 60px rgba(0,0,0,0.7), inset 0 0 40px rgba(80,140,255,0.04); position:relative;
   }
   .modal.modal-narrow{ max-width:min(440px, 88vw); }
-  .modal h3{ font-family:var(--font-head); margin:0 0 6px; font-size:1.35rem; color:var(--navy); }
-  .modal .sub{ font-size:0.95rem; color:var(--text-muted); margin:0 0 16px; }
-  .modal-close{ position:absolute; top:14px; right:14px; background:none; border:none; font-size:1.3rem; color:var(--text-muted); cursor:pointer; }
+  .modal h3{ font-family:var(--font-body); font-weight:bold; margin:0 0 6px; font-size:1.35rem; color:#e8edf5; letter-spacing:0.3px; }
+  .modal .sub{ font-size:0.95rem; color:#8aa0c0; margin:0 0 16px; }
+  .modal-close{ position:absolute; top:14px; right:14px; background:none; border:none; font-size:1.3rem; color:#8aa0c0; cursor:pointer; }
   .dialogue-bar{
     background:linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.68) 55%, transparent 100%);
     padding:64px 26px 34px;
@@ -186,7 +210,8 @@
     50% { transform:translateY(3px); opacity:1; }
   }
   .code-box{
-    background:var(--navy); color:#e8edf3; font-family:var(--font-mono); font-size:1.05rem;
+    background:#05060a; color:#e8edf3; font-family:var(--font-mono); font-size:1.05rem;
+    border:1px solid rgba(120,170,255,0.15);
     border-radius:8px; padding:18px; white-space:pre-wrap; word-break:break-word; line-height:1.9; margin-bottom:16px;
   }
   .code-box .blank-marker{
@@ -195,47 +220,61 @@
     border-radius:5px; font-weight:bold; text-align:center;
   }
   .answer-row{ display:flex; gap:10px; margin-bottom:14px; }
-  .answer-row input{ flex:1; font-family:var(--font-mono); font-size:1.1rem; padding:11px 12px; border:1px solid #cfd6de; border-radius:8px; }
-  .btn{ font-family:var(--font-body); background:var(--navy); color:var(--white); border:none; border-radius:8px; padding:11px 20px; font-size:1rem; cursor:pointer; }
-  .btn.secondary{ background:var(--slate-lt); color:var(--text-dark); }
-  .feedback{ font-size:0.95rem; margin-top:6px; min-height:1.3em; }
-  .feedback.ok{ color:#2f7a3a; }
-  .feedback.info{ color:var(--navy); }
-  .feedback.bad{ color:var(--danger); }
-  .checklist{ margin:6px 0 14px; }
-  .checklist li{ font-size:0.95rem; margin-bottom:8px; list-style:none; display:flex; align-items:center; gap:6px; }
-  .checklist .dot{ width:9px; height:9px; border-radius:50%; background:#c7cfd8; flex-shrink:0; }
-  .checklist .dot.on{ background:#3f8a4a; }
-  .keypad-display{ font-family:var(--font-mono); font-size:1.6rem; letter-spacing:6px; text-align:center; background:var(--navy-deep); color:var(--amber); border-radius:8px; padding:12px; margin-bottom:10px; }
-  .keypad-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
-  .key{ font-family:var(--font-mono); font-size:1.1rem; background:var(--slate-lt); border:1px solid #dbe2ea; border-radius:6px; padding:12px 0; cursor:pointer; }
-  .key:hover{ background:#e2e8ee; }
-
-  /* ---------- 도어락 스타일 잠금 모달 (사진 속 실제 도어락 느낌) ---------- */
-  .modal.lock-modal{
-    background:linear-gradient(160deg, #17181c, #0a0a0c);
-    border:1px solid rgba(120,170,255,0.18);
-    box-shadow:0 20px 60px rgba(0,0,0,0.7), inset 0 0 40px rgba(80,140,255,0.05);
+  .answer-row input{
+    flex:1; font-family:var(--font-mono); font-size:1.1rem; padding:11px 12px;
+    background:#0d0e12; color:#e8edf3; border:1px solid rgba(120,170,255,0.25); border-radius:8px;
   }
-  .modal.lock-modal h3{ color:#cfe3ff; font-family:var(--font-body); letter-spacing:0.5px; }
-  .modal.lock-modal .sub{ color:#8aa0c0; }
-  .modal.lock-modal .modal-close{ color:#8aa0c0; }
-  .lock-modal .keypad-display{
+  .btn{ font-family:var(--font-body); background:#3f6fd1; color:var(--white); border:none; border-radius:8px; padding:11px 20px; font-size:1rem; cursor:pointer; }
+  .btn.secondary{ background:rgba(255,255,255,0.08); color:#cfe3ff; border:1px solid rgba(255,255,255,0.12); }
+  .feedback{ font-size:0.95rem; margin-top:6px; min-height:1.3em; }
+  .feedback.ok{ color:#7fe0a0; }
+  .feedback.info{ color:#cfe3ff; }
+  .feedback.bad{ color:#ff6b7a; }
+  .checklist{ margin:6px 0 14px; }
+  .checklist li{ font-size:0.95rem; margin-bottom:8px; list-style:none; display:flex; align-items:center; gap:6px; color:#cfe3ff; }
+  .checklist .dot{ width:9px; height:9px; border-radius:50%; background:#3a3d45; flex-shrink:0; }
+  .checklist .dot.on{ background:#3f8a4a; }
+  .keypad-display{
+    font-family:var(--font-mono); text-align:center; border-radius:8px; margin-bottom:10px;
     background:#050608; color:#6fc3ff; border:1px solid rgba(111,195,255,0.35);
     text-shadow:0 0 10px rgba(111,195,255,0.85), 0 0 22px rgba(111,195,255,0.35);
     font-size:1.9rem; letter-spacing:10px; padding:16px;
   }
-  .lock-modal .keypad-grid{ gap:10px; }
-  .lock-modal .key{
+  .keypad-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .key{
     background:#101114; color:#7fc4ff; border:1px solid rgba(111,195,255,0.22);
-    border-radius:8px; font-size:1.3rem; padding:16px 0;
+    border-radius:8px; font-family:var(--font-mono); font-size:1.3rem; padding:16px 0; cursor:pointer;
     text-shadow:0 0 8px rgba(111,195,255,0.7);
     transition:background .12s ease, box-shadow .12s ease;
   }
-  .lock-modal .key:hover{ background:#181a1f; box-shadow:0 0 14px rgba(111,195,255,0.35); }
-  .lock-modal .key.key-clear, .lock-modal .key.key-back{ color:#ff9d9d; text-shadow:0 0 8px rgba(255,120,120,0.6); }
-  .lock-modal .feedback.bad{ color:#ff6b7a; }
-  .lock-modal .feedback.ok{ color:#7fe0a0; }
+  .key:hover{ background:#181a1f; box-shadow:0 0 14px rgba(111,195,255,0.35); }
+  .key.key-clear, .key.key-back{ color:#ff9d9d; text-shadow:0 0 8px rgba(255,120,120,0.6); }
+
+  /* ---------- 도어락 스타일 잠금 모달 (디지털 키패드, 사진 속 실제 도어락 느낌) ---------- */
+  .modal.lock-modal{ }
+
+  /* ---------- 콤보락 스타일(회전 다이얼 자물쇠) ---------- */
+  .modal.combo-modal{ }
+  .combo-lock-body{
+    display:flex; justify-content:center; align-items:center; gap:14px;
+    background:#0c0d10; border:1px solid rgba(255,255,255,0.08); border-radius:12px;
+    padding:22px 18px; margin-bottom:14px;
+    box-shadow:inset 0 2px 10px rgba(0,0,0,0.6);
+  }
+  .combo-dial{ display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .combo-dial button{
+    width:38px; height:30px; border-radius:6px; border:1px solid rgba(255,255,255,0.15);
+    background:#1a1b20; color:#cfe3ff; font-size:1rem; cursor:pointer;
+  }
+  .combo-dial button:hover{ background:#24262d; }
+  .combo-dial .combo-digit{
+    width:44px; height:56px; border-radius:6px;
+    background:linear-gradient(180deg, #2b2c33, #101114);
+    border:1px solid rgba(255,255,255,0.18);
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-mono); font-size:1.8rem; font-weight:bold; color:#f4f4f4;
+    box-shadow:inset 0 2px 4px rgba(0,0,0,0.6);
+  }
 
   /* ---------- 화면 중앙 이미지 팝업 ---------- */
   .image-popup{
@@ -247,16 +286,53 @@
     display:block; max-width:min(60vw, 320px); max-height:46vh; width:auto;
     border-radius:12px; box-shadow:0 25px 60px rgba(0,0,0,0.7); border:2px solid rgba(255,255,255,0.12);
   }
-  .choice-prompt{ font-size:1rem; line-height:1.75; color:var(--text-dark); margin:0 0 16px; }
+  .choice-prompt{ font-size:1rem; line-height:1.75; color:#e8edf3; margin:0 0 16px; }
   .choice-btn{
     display:block; width:100%; text-align:left; margin-bottom:10px;
-    padding:13px 14px; border:1px solid #cfd6de; border-radius:8px;
-    background:var(--white); color:var(--text-dark);
+    padding:13px 14px; border:1px solid rgba(255,255,255,0.14); border-radius:8px;
+    background:#101114; color:#e8edf3;
     font-family:var(--font-body); font-size:1rem; cursor:pointer; transition:background .12s ease, border-color .12s ease;
   }
-  .choice-btn:hover:not(:disabled){ background:var(--slate-lt); border-color:var(--slate); }
-  .choice-btn.correct{ border-color:#3f8a4a; background:#e9f5ea; color:#2f7a3a; font-weight:bold; }
+  .choice-btn:hover:not(:disabled){ background:#181a1f; border-color:rgba(111,195,255,0.4); }
+  .choice-btn.correct{ border-color:#3f8a4a; background:rgba(63,138,74,0.18); color:#7fe0a0; font-weight:bold; }
   .choice-btn:disabled{ cursor:default; opacity:0.75; }
+
+  /* ---------- 로그인 폼 (인포데스크 컴퓨터) ---------- */
+  .login-form{ display:flex; flex-direction:column; gap:10px; }
+  .login-form input{
+    font-family:var(--font-mono); font-size:1rem; padding:11px 12px;
+    background:#0d0e12; color:#e8edf3; border:1px solid rgba(120,170,255,0.25); border-radius:8px;
+  }
+
+  /* ---------- 뉴스 기사 목록 (뉴스 사이트 뷰) ---------- */
+  .news-feed{ display:flex; flex-direction:column; gap:12px; max-height:52vh; overflow-y:auto; }
+  .news-article{
+    background:#0d0e12; border:1px solid rgba(255,255,255,0.1); border-radius:8px;
+    padding:12px 14px;
+  }
+  .news-title{ font-weight:bold; color:#ff8f8f; font-size:0.95rem; margin-bottom:6px; line-height:1.4; }
+  .news-body{ color:#c3cbdb; font-size:0.85rem; line-height:1.6; }
+
+  /* ---------- 거울 퍼즐: 붉은 질문 텍스트 / 펜 없을 때 안내문 / 꾹 누르기 연출 ---------- */
+  .hold-question{
+    font-size:1.3rem; font-weight:bold; color:#ff2b3d; text-align:center;
+    text-shadow:0 0 12px rgba(255,40,60,0.55), 0 0 2px rgba(255,40,60,0.8);
+    margin:6px 0 16px;
+  }
+  .hold-missing-msg{ color:#8aa0c0; font-style:italic; font-size:0.85rem; text-align:center; margin-top:18px; }
+  .hold-write-area{
+    position:relative; height:110px; border-radius:10px; overflow:hidden;
+    cursor:url('img/cursor-handkerchief.png') 24 20, auto;
+    background:linear-gradient(160deg, #2a2d33, #14151a);
+    border:1px solid rgba(255,255,255,0.12);
+    margin:14px 0;
+    -webkit-user-select:none; user-select:none;
+  }
+  .hold-canvas{ position:absolute; inset:0; width:100%; height:100%; display:block; touch-action:none; }
+  .hold-label{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    color:#8aa0c0; font-size:0.9rem; pointer-events:none; transition:opacity .25s ease;
+  }
 </style>
 </head>
 <body>
@@ -288,13 +364,12 @@
     </div>
   </div>
 
-  <div id="moveToggleWrap">
-    <button id="moveToggleBtn">🚶 이동</button>
-  </div>
-
   <div id="invbar">
-    <span class="lbl">소지품</span>
-    <div id="invItems" style="display:flex; gap:8px;"></div>
+    <div class="invbar-left">
+      <span class="lbl">소지품</span>
+      <div id="invItems" style="display:flex; gap:8px;"></div>
+    </div>
+    <button id="moveToggleBtn">이동</button>
   </div>
 </div>
 

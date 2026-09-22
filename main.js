@@ -41,6 +41,7 @@ setInterval(() => {
 
 /* ---------- 설정 모달 ---------- */
 document.getElementById('settingsBtn').addEventListener('click', () => {
+  if (dialogueBar.classList.contains('show') || imagePopup.classList.contains('show')) return;
   openModal(`
     <h3>설정</h3>
     <p class="sub">배경음악·효과음 볼륨을 조절할 수 있어요</p>
@@ -96,3 +97,10 @@ function finishGame(){
 /* ---------- 시작 ---------- */
 renderInventorySlots();
 render();
+
+/* 오프닝 대사 — 임시 텍스트. 배열이라 줄을 더 추가/삭제해도 그대로 순서대로 넘어감 */
+showDialogue([
+  '(임시 대사 1) ...여기가 어디지?',
+  '(임시 대사 2) 분명 야자 시간에 잠깐 졸았던 것 같은데.',
+  '(임시 대사 3) 왜 이렇게 조용하지... 일단 나가봐야겠다.'
+]);

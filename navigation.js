@@ -33,11 +33,14 @@ document.getElementById('sceneArt').addEventListener('click', (e) => {
 
       if (hasAll && !state.seenDialogue['with_' + id]){
         state.seenDialogue['with_' + id] = true;
+        if (hs.withItem.sound) playSfx(hs.withItem.sound);
         // setState는 배경 교체처럼 "즉시 눈에 보여야" 자연스러운 변화라, 대사가 뜨는 것과 동시에 바로 반영
         if (hs.withItem.setState){ state[hs.withItem.setState] = true; render(); }
         showDialogue(hs.withItem.line, () => {
           if (hs.withItem.opensPuzzle) openPuzzle(hs.withItem.opensPuzzle);
           if (hs.withItem.setPower) onBreakerSolved();
+          if (hs.withItem.grantItem) addInventory(hs.withItem.grantItem);
+          if (hs.withItem.removeItem) removeInventoryItem(hs.withItem.removeItem);
         });
         return;
       }
@@ -95,7 +98,15 @@ document.getElementById('sceneArt').addEventListener('click', (e) => {
       openPuzzle(id, openStage);
     }
   }
-  else if (kind === 'lock') openLock(id, dest || undefined);
+  else if (kind === 'lock'){
+    const hs = findHotspot(id);
+    if (hs && hs.line && !state.seenDialogue[id]){
+      state.seenDialogue[id] = true;
+      showDialogue(hs.line, () => openLock(id, dest || undefined));
+    } else {
+      openLock(id, dest || undefined);
+    }
+  }
   else if (kind === 'breaker') openBreaker();
 });
 
@@ -134,7 +145,9 @@ function render(){
     btn.onclick = (e) => {
       if (dialogueBar.classList.contains('show') || imagePopup.classList.contains('show')) return;
       if (!locked){ goRoom(c.dest); return; }
-      if (c.introImage || c.introLine){
+      const introKey = 'doorIntro_' + c.lockId;
+      if ((c.introImage || c.introLine) && !state.seenDialogue[introKey]){
+        state.seenDialogue[introKey] = true;
         e.stopPropagation();
         showImagePopup(c.introImage);
         showDialogue(c.introLine || '', () => {

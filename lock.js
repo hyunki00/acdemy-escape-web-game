@@ -140,20 +140,5 @@ function comboCheck(){
   }
 }
 
-/* ---------- 차단기 / 호출패널 ---------- */
-function openBreaker(){
-  if (!hasItem('masterkey')){
-    openModal(`<h3>차단기함</h3><p class="sub">잠겨 있다. 열쇠가 필요해 보인다.</p>`);
-    return;
-  }
-  if (state.power){
-    openModal(`<h3>차단기함</h3><p class="sub">이미 전원이 복구되어 있다.</p>`);
-    return;
-  }
-  openPuzzle('p_breaker');
-}
+/* ---------- 차단기 전원 복구 콜백 ---------- */
 function onBreakerSolved(){ state.power = true; render(); }
-function openCallPanel(){
-  openPuzzle('p_callcode');
-}
-function onCallCodeSolved(){ state.unlocked['elevatorCall'] = true; render(); }

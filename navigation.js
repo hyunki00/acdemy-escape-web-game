@@ -64,23 +64,6 @@ document.getElementById('sceneArt').addEventListener('click', (e) => {
     return;
   }
 
-  // 호출 버튼: 전원 꺼진 동안은 누를 때마다 대사만, 전원 켜지면 최초 1회 대사 후 퍼즐 오픈
-  if (kind === 'callpanel'){
-    const hs = findHotspot(id);
-    if (!state.power){
-      showDialogue(hs && hs.lineOff ? hs.lineOff : '전원이 꺼져 있어 반응이 없다.');
-      return;
-    }
-    if (DEBUG_FREE_ROAM) return; // 전원이 켜졌어도 디버그 모드에서는 퍼즐 진입은 건너뜀
-    if (hs && hs.line && !state.seenDialogue[id]){
-      state.seenDialogue[id] = true;
-      showDialogue(hs.line, () => openCallPanel());
-    } else {
-      openCallPanel();
-    }
-    return;
-  }
-
   if (DEBUG_FREE_ROAM){
     if (kind === 'lock' && dest) goRoom(dest); // 잠긴 문이어도 목적지가 있으면 바로 이동
     return; // 퍼즐/차단기/호출패널 클릭은 전부 무시
@@ -112,7 +95,6 @@ document.getElementById('sceneArt').addEventListener('click', (e) => {
       openLock(id, dest || undefined);
     }
   }
-  else if (kind === 'breaker') openBreaker();
 });
 
 /* ---------- 방 이동 / 렌더링 ---------- */

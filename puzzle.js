@@ -30,7 +30,6 @@ function advanceStage(puzzleId, p, stage, fb){
   } else {
     markSolved(puzzleId);
     const def = getStageDef(p, stage);
-    if (puzzleId === 'p_callcode') onCallCodeSolved();
     if (p.noDigit) onBreakerSolved();
     if (p.grantItem) addInventory(p.grantItem);
     if (p.completeSound) playSfx(p.completeSound);
@@ -58,22 +57,7 @@ function openPuzzle(puzzleId, stage){
   let holdNeedsInit = null;
   let breakerNeedsInit = null;
 
-  if (def.type === 'choice'){
-    subText = def.subtext || '다음 중에서 골라보자.';
-    const optionsHtml = def.options.map((opt, i) => {
-      const isCorrectShown = already && i === def.correct;
-      return `<button class="choice-btn${isCorrectShown ? ' correct' : ''}" ${already ? 'disabled' : `onclick="checkChoice('${puzzleId}', ${i}, '${stage}')"`}>${opt}</button>`;
-    }).join('');
-    bodyExtra = `<div class="choice-list" id="choiceList">${def.prompt ? `<p class="choice-prompt">${def.prompt.replace(/\n/g, '<br>')}</p>` : ''}${optionsHtml}</div>`;
-  } else if (def.type === 'text'){
-    subText = def.subtext || '다음 질문에 답해보자.';
-    bodyExtra = `<div class="choice-list">${def.prompt ? `<p class="choice-prompt">${def.prompt.replace(/\n/g, '<br>')}</p>` : ''}
-      ${already ? '' : `<div class="answer-row">
-        <input id="outputInput" type="text" placeholder="정답 입력" onkeydown="if(event.key==='Enter') checkOutput('${puzzleId}', '${stage}')">
-        <button class="btn" onclick="checkOutput('${puzzleId}', '${stage}')">확인</button>
-      </div>
-      <div style="text-align:right;"><button class="btn secondary" onclick="showHint('${puzzleId}', '${stage}')">힌트</button></div>`}</div>`;
-  } else if (def.type === 'info'){
+  if (def.type === 'info'){
     // 답을 직접 입력받지 않고, 정보/힌트만 보여준 뒤 확인 버튼으로 다음 단계로 넘어가는 타입
     subText = def.subtext || '';
     bodyExtra = `<div class="choice-list">${def.prompt ? `<p class="choice-prompt">${def.prompt.replace(/\n/g, '<br>')}</p>` : ''}
@@ -196,22 +180,6 @@ function checkOutput(puzzleId, stage){
   } else {
     fb.className = 'feedback bad';
     fb.textContent = '다시 확인해보세요.';
-  }
-}
-function checkChoice(puzzleId, idx, stage){
-  stage = stage || 'main';
-  const p = PUZZLES[puzzleId];
-  const def = getStageDef(p, stage);
-  const fb = document.getElementById('puzzleFeedback');
-  if (idx === def.correct){
-    document.querySelectorAll('#choiceList .choice-btn').forEach((btn, i) => {
-      btn.disabled = true;
-      if (i === idx) btn.classList.add('correct');
-    });
-    advanceStage(puzzleId, p, stage, fb);
-  } else {
-    fb.className = 'feedback bad';
-    fb.textContent = '음... 다시 생각해보자.';
   }
 }
 function checkInfo(puzzleId, stage){

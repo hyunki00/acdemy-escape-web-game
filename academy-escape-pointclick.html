@@ -68,10 +68,6 @@
   #sceneArt{ position:absolute; inset:0; display:block; opacity:1; transition:opacity 0.5s ease; }
   #sceneArt.fade-out{ opacity:0; }
   #sceneArt svg{ width:100%; height:100%; display:block; }
-  .hotspot-region{ fill:transparent; stroke:transparent; stroke-width:3; cursor:pointer; transition:fill .15s ease, stroke .15s ease; }
-  .hotspot-region:hover{ fill:rgba(242,165,65,0.16); stroke:rgba(242,165,65,0.85); }
-  .hotspot-region.is-solved{ stroke:rgba(63,138,74,0.55); }
-  .hotspot-region.is-solved:hover{ fill:rgba(63,138,74,0.16); }
 
   /* ---------- 이미지 기반 씬 (실사 → 게임 그래픽 변환 자산) ---------- */
   .image-scene{ position:absolute; inset:0; overflow:hidden; }
@@ -86,19 +82,6 @@
   .hitbox-layer > *:hover{ fill:rgba(255,221,51,0.22); stroke:#ffdd33; }
   body.dialogue-active .hitbox-layer > *{ pointer-events:none !important; }
   body.dialogue-active #sceneWrap{ cursor:pointer; }
-  .lit-overlay{
-    mix-blend-mode:screen;
-    filter:drop-shadow(0 0 4px rgba(255,240,160,0.85));
-    animation: litPulse 2.2s ease-in-out infinite;
-  }
-  .lit-text{
-    fill:rgba(58,42,6,0.82); font-family:var(--font-mono); font-weight:bold;
-    font-size:5px; paint-order:stroke; stroke:rgba(255,255,255,0.7); stroke-width:0.4px;
-  }
-  @keyframes litPulse{
-    0%, 100% { opacity:0.8; }
-    50% { opacity:1; }
-  }
   .flicker-overlay{
     position:absolute; inset:0; pointer-events:none;
     background: radial-gradient(circle at 50% 22%, rgba(255,50,50,0.38), transparent 55%);
@@ -228,10 +211,6 @@
   .feedback.ok{ color:#7fe0a0; }
   .feedback.info{ color:#cfe3ff; }
   .feedback.bad{ color:#ff6b7a; }
-  .checklist{ margin:6px 0 14px; }
-  .checklist li{ font-size:0.95rem; margin-bottom:8px; list-style:none; display:flex; align-items:center; gap:6px; color:#cfe3ff; }
-  .checklist .dot{ width:9px; height:9px; border-radius:50%; background:#3a3d45; flex-shrink:0; }
-  .checklist .dot.on{ background:#3f8a4a; }
   .keypad-display{
     font-family:var(--font-mono); text-align:center; border-radius:8px; margin-bottom:10px;
     background:#050608; color:#6fc3ff; border:1px solid rgba(111,195,255,0.35);
@@ -248,11 +227,7 @@
   .key:hover{ background:#181a1f; box-shadow:0 0 14px rgba(111,195,255,0.35); }
   .key.key-clear, .key.key-back{ color:#ff9d9d; text-shadow:0 0 8px rgba(255,120,120,0.6); }
 
-  /* ---------- 도어락 스타일 잠금 모달 (디지털 키패드, 사진 속 실제 도어락 느낌) ---------- */
-  .modal.lock-modal{ }
-
   /* ---------- 콤보락 스타일(회전 다이얼 자물쇠) ---------- */
-  .modal.combo-modal{ }
   .combo-lock-body{
     display:flex; justify-content:center; align-items:center; gap:14px;
     background:#0c0d10; border:1px solid rgba(255,255,255,0.08); border-radius:12px;
@@ -306,15 +281,6 @@
     padding:6px 16px; border-radius:20px; border:1px solid rgba(111,195,255,0.3);
   }
   .choice-prompt{ font-size:1rem; line-height:1.75; color:#e8edf3; margin:0 0 16px; }
-  .choice-btn{
-    display:block; width:100%; text-align:left; margin-bottom:10px;
-    padding:13px 14px; border:1px solid rgba(255,255,255,0.14); border-radius:8px;
-    background:#101114; color:#e8edf3;
-    font-family:var(--font-body); font-size:1rem; cursor:pointer; transition:background .12s ease, border-color .12s ease;
-  }
-  .choice-btn:hover:not(:disabled){ background:#181a1f; border-color:rgba(111,195,255,0.4); }
-  .choice-btn.correct{ border-color:#3f8a4a; background:rgba(63,138,74,0.18); color:#7fe0a0; font-weight:bold; }
-  .choice-btn:disabled{ cursor:default; opacity:0.75; }
 
   /* ---------- 로그인 폼 (인포데스크 컴퓨터) ---------- */
   .login-form{ display:flex; flex-direction:column; gap:10px; }

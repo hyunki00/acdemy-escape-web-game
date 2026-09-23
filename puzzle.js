@@ -355,34 +355,38 @@ function finishHoldWriting(){
    "하나는 홀수 번, 하나는 짝수 번 눌린" 상태가 되면 그 사이 전선은 항상 켜진다(체스판 색칠
    원리) — 그래서 고장난 버튼이 한쪽 색 그룹에만 몰려 있으면 반대쪽 색 그룹만 눌러서 항상
    풀 수 있다. brokenBreakers는 반드시 한쪽 색 그룹 안에서만 골라야 항상 풀리는 게 보장됨. */
-function breakerNeighbors(idx){
-  const r = Math.floor(idx / 3), c = idx % 3;
+function breakerNeighbors(idx, cols, rows){
+  const r = Math.floor(idx / cols), c = idx % cols;
   const list = [];
   if (c > 0) list.push(idx - 1);
-  if (c < 2) list.push(idx + 1);
-  if (r > 0) list.push(idx - 3);
-  if (r < 2) list.push(idx + 3);
+  if (c < cols - 1) list.push(idx + 1);
+  if (r > 0) list.push(idx - cols);
+  if (r < rows - 1) list.push(idx + cols);
   return list;
 }
 function wireKey(a, b){ return Math.min(a, b) + '-' + Math.max(a, b); }
 
 function renderBreakerGrid(def){
+  const cols = def.gridCols || 3, rows = def.gridRows || 3;
   const broken = def.brokenBreakers || [];
-  let html = '<div class="breaker-grid">';
-  for (let r = 0; r < 5; r++){
-    for (let c = 0; c < 5; c++){
+  const gridW = 2 * cols - 1, gridH = 2 * rows - 1;
+  const colTemplate = Array.from({length: gridW}, (_, i) => i % 2 === 0 ? '56px' : '26px').join(' ');
+  const rowTemplate = Array.from({length: gridH}, (_, i) => i % 2 === 0 ? '56px' : '26px').join(' ');
+  let html = `<div class="breaker-grid" style="grid-template-columns:${colTemplate}; grid-template-rows:${rowTemplate};">`;
+  for (let r = 0; r < gridH; r++){
+    for (let c = 0; c < gridW; c++){
       if (r % 2 === 0 && c % 2 === 0){
-        const idx = (r / 2) * 3 + (c / 2);
+        const idx = (r / 2) * cols + (c / 2);
         const isBroken = broken.includes(idx);
         html += `<button type="button" class="breaker-btn${isBroken ? ' broken' : ''}" id="breaker${idx}"
           ${isBroken ? 'disabled title="고장난 버튼"' : `onclick="pressBreaker(${idx})"`}>⏻</button>`;
       } else if (r % 2 === 0 && c % 2 === 1){
-        const left = (r / 2) * 3 + ((c - 1) / 2);
+        const left = (r / 2) * cols + ((c - 1) / 2);
         const key = wireKey(left, left + 1);
         html += `<div class="wire wire-h" id="wire-${key}"></div>`;
       } else if (r % 2 === 1 && c % 2 === 0){
-        const top = ((r - 1) / 2) * 3 + (c / 2);
-        const key = wireKey(top, top + 3);
+        const top = ((r - 1) / 2) * cols + (c / 2);
+        const key = wireKey(top, top + cols);
         html += `<div class="wire wire-v" id="wire-${key}"></div>`;
       } else {
         html += `<div class="breaker-spacer"></div>`;
@@ -397,15 +401,19 @@ let _breakerPuzzleId = null, _breakerStage = null;
 let _breakerPressed = [];
 let _breakerWires = {};
 let _breakerBroken = [];
+let _breakerCols = 3, _breakerRows = 3;
 
 function initBreakerBox(puzzleId, stage, def){
   _breakerPuzzleId = puzzleId;
   _breakerStage = stage;
-  _breakerPressed = new Array(9).fill(false);
+  _breakerCols = def.gridCols || 3;
+  _breakerRows = def.gridRows || 3;
+  const total = _breakerCols * _breakerRows;
+  _breakerPressed = new Array(total).fill(false);
   _breakerBroken = def.brokenBreakers || [];
   _breakerWires = {};
-  for (let i = 0; i < 9; i++){
-    breakerNeighbors(i).forEach(n => { if (n > i) _breakerWires[wireKey(i, n)] = false; });
+  for (let i = 0; i < total; i++){
+    breakerNeighbors(i, _breakerCols, _breakerRows).forEach(n => { if (n > i) _breakerWires[wireKey(i, n)] = false; });
   }
 }
 function pressBreaker(idx){
@@ -413,7 +421,7 @@ function pressBreaker(idx){
   _breakerPressed[idx] = !_breakerPressed[idx];
   const btn = document.getElementById('breaker' + idx);
   if (btn) btn.classList.toggle('active', _breakerPressed[idx]);
-  breakerNeighbors(idx).forEach(n => {
+  breakerNeighbors(idx, _breakerCols, _breakerRows).forEach(n => {
     const key = wireKey(idx, n);
     _breakerWires[key] = !_breakerWires[key];
     const wireEl = document.getElementById('wire-' + key);

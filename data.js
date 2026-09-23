@@ -120,8 +120,9 @@ const PUZZLES = {
   p_breaker: {
     title: '차단기함', type: 'breakerbox', noDigit: true,
     subtext: '차단기 버튼을 눌러서 주변 배선에 불을 켜보자. 모든 배선에 불이 들어와야 한다.',
-    brokenBreakers: [0, 4, 8], // 좌상단, 중앙, 우하단 — 3개 고장. 이 3개를 안 눌러도 항상 풀 수 있음
-    hint: '고장난 버튼(어두운 버튼)은 신경 쓰지 말고, 네 방향 가장자리 중간 버튼들만 눌러보자.',
+    gridCols: 4, gridRows: 4,
+    brokenBreakers: [0, 2, 8, 10, 15], // 체스판의 한쪽 색 그룹 안에서만 골라야 항상 풀림 보장됨
+    hint: '차단기를 누르면 그 주변 배선만 바뀌어. 이웃한 두 차단기가 서로 반대 상태(하나는 누르고 하나는 안 누름)가 되어야 그 사이 배선이 켜지는 것 같아.',
     successMsg: '✓ 딸깍! 모든 배선에 불이 들어왔다.'
   },
   p_callcode: {
@@ -225,7 +226,10 @@ const ROOMS = {
   restroom: {
     name: '화장실', desc: '가벼운 분위기 환기용 공간.',
     connections: [ { label: '엘리베이터 앞', dest: 'elevatorFront' } ],
-    background(s){ return s.solved.p_restroom ? 'img/restroom-broken.png' : 'img/restroom.png'; },
+    background(s){
+      if (s.cabinetOpen) return 'img/restroom-breaker-open.png';
+      return s.solved.p_restroom ? 'img/restroom-broken.png' : 'img/restroom.png';
+    },
     hotspots: [
       { kind: 'puzzle', id: 'p_restroom', label: '거울',
         showIf: s => !s.solved.p_restroom,
@@ -248,7 +252,7 @@ const ROOMS = {
       { kind: 'puzzle', id: 'p_breaker', label: '차단기함',
         showIf: s => s.cabinetOpen,
         line: '캐비닛 안에 낡은 차단기함이 있다. 전원을 복구할 수 있을 것 같다.',
-        points: [[63.96,44.07],[63.85,44.44],[63.91,53.8],[64.17,53.98],[68.28,53.8],[68.39,53.61],[68.44,49.91],[68.39,44.17],[68.23,43.98]] },
+        points: [[63.59,44.17],[63.54,53.7],[67.5,53.7],[67.5,44.17]] },
       { kind: 'flavor', id: 'f_stalls', label: '화장실 칸막이',
         line: '칸막이 문들이 전부 닫혀 있다. 안에는 아무도 없는 것 같다.',
         points: [[40.36,20.83],[39.27,20.83],[39.27,26.3],[14.53,26.3],[14.53,65.0],[23.91,65.46],[23.18,75.19],[23.54,84.81],[40.26,84.63],[40.73,76.57],[43.07,77.41],[44.27,70.65],[45.89,70.56],[46.15,67.31],[48.02,65.56],[48.18,34.35]] }

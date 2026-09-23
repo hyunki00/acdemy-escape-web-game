@@ -29,15 +29,21 @@ function advanceStage(puzzleId, p, stage, fb){
     setTimeout(() => { openPuzzle(puzzleId, 'followUp'); }, 900);
   } else {
     markSolved(puzzleId);
-    fb.className = p.flavor ? 'feedback info' : 'feedback ok';
-    fb.textContent = p.flavor ? (p.successMsg || '✓ 정답!') : `✓ 정답! 코드 조각 확보: ${p.digit}`;
+    const def = getStageDef(p, stage);
     if (puzzleId === 'p_callcode') onCallCodeSolved();
     if (p.noDigit) onBreakerSolved();
     if (p.grantItem) addInventory(p.grantItem);
     if (p.completeSound) playSfx(p.completeSound);
-    // 완료 메시지를 잠깐 보여준 뒤 모달을 자동으로 닫음(이전 화면 위에 메시지만 얹힌 채
-    // 계속 떠 있던 문제 방지). 다시 열면 openPuzzle이 "이미 확인함" 상태로 깔끔하게 그려줌.
-    setTimeout(() => { closeModal(); }, 900);
+    if (def.silentClose){
+      // 완료 메시지 없이 바로 닫힘 (예: 정보만 확인하는 화면)
+      closeModal();
+    } else {
+      fb.className = p.flavor ? 'feedback info' : 'feedback ok';
+      fb.textContent = p.flavor ? (p.successMsg || '✓ 정답!') : `✓ 정답! 코드 조각 확보: ${p.digit}`;
+      // 완료 메시지를 잠깐 보여준 뒤 모달을 자동으로 닫음(이전 화면 위에 메시지만 얹힌 채
+      // 계속 떠 있던 문제 방지). 다시 열면 openPuzzle이 "이미 확인함" 상태로 깔끔하게 그려줌.
+      setTimeout(() => { closeModal(); }, 900);
+    }
   }
 }
 

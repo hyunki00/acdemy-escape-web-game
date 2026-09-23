@@ -51,7 +51,16 @@ function showItemPopup(item){
   itemPopupName.textContent = item.name || '';
   itemPopup.classList.add('show');
   if (_itemPopupTimer) clearTimeout(_itemPopupTimer);
-  _itemPopupTimer = setTimeout(() => { itemPopup.classList.remove('show'); }, 1700);
+  // 아이템 지급 직후 대사가 뒤이어 뜨는 경우(예: 처음 줍는 사물)가 많은데, 그 대사가
+  // 다 끝날 때까지 팝업이 유지돼야 하므로 여기서 바로 타이머를 걸지 않고, 살짝(50ms) 대기한
+  // 뒤에 실제로 대화가 떠 있는지 확인해서 분기한다.
+  _itemPopupTimer = setTimeout(() => {
+    if (!dialogueBar.classList.contains('show')){
+      // 뒤이은 대화가 없으면(예: 퍼즐을 풀어서 바로 받는 경우) 기존처럼 일정 시간 후 자동으로 닫힘.
+      // 대화가 있으면 advanceDialogue()가 대화를 완전히 닫을 때 함께 닫아준다.
+      _itemPopupTimer = setTimeout(() => { itemPopup.classList.remove('show'); }, 1600);
+    }
+  }, 50);
 }
 
 /* 오브젝트 상호작용 효과음 공용 재생기 — hotspot.sound에 적힌 경로를 그때그때 넣어 재생 */
@@ -97,6 +106,10 @@ function advanceDialogue(){
   } else {
     dialogueBar.classList.remove('show');
     document.body.classList.remove('dialogue-active');
+    if (itemPopup.classList.contains('show')){
+      if (_itemPopupTimer) clearTimeout(_itemPopupTimer);
+      itemPopup.classList.remove('show');
+    }
     const cb = _dialogueOnProceed;
     _dialogueQueue = []; _dialogueIndex = 0; _dialogueOnProceed = null;
     if (cb) cb();

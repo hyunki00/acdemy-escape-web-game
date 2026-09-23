@@ -85,7 +85,27 @@ let _dialogueQueue = [];
 let _dialogueIndex = 0;
 let _dialogueOnProceed = null;
 
+let _typeTimer = null;
+let _typeDone = false;
+const TYPE_SPEED_MS = 65; // 한 글자당 걸리는 시간
+
 function renderDialogueLine(){
+  const line = _dialogueQueue[_dialogueIndex] || '';
+  if (_typeTimer) clearInterval(_typeTimer);
+  _typeDone = false;
+  dialogueBarText.textContent = '';
+  let i = 0;
+  _typeTimer = setInterval(() => {
+    i++;
+    dialogueBarText.textContent = line.slice(0, i);
+    if (i >= line.length) skipTyping();
+  }, TYPE_SPEED_MS);
+}
+/* 타이핑 중 클릭 시 애니메이션을 건너뛰고 문장 전체 + ▽ 표시를 즉시 보여줌 */
+function skipTyping(){
+  if (_typeTimer) clearInterval(_typeTimer);
+  _typeTimer = null;
+  _typeDone = true;
   const line = _dialogueQueue[_dialogueIndex] || '';
   dialogueBarText.innerHTML = `${escapeHtml(line)} <span class="dialogue-next">▽</span>`;
 }
@@ -100,6 +120,7 @@ function showDialogue(text, onProceed){
 }
 function advanceDialogue(){
   if (!dialogueBar.classList.contains('show')) return;
+  if (!_typeDone){ skipTyping(); return; }
   if (_dialogueIndex < _dialogueQueue.length - 1){
     _dialogueIndex++;
     renderDialogueLine();

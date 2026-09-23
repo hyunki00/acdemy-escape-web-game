@@ -114,9 +114,14 @@ function finishGame(){
 renderInventorySlots();
 render();
 
+/* 잠들었다 눈을 뜨는 연출 — 화면이 까맣게 덮여있다가 잠깐 뒤 서서히 밝아짐 */
+setTimeout(() => {
+  document.getElementById('wakeOverlay').classList.add('hide');
+}, 400);
+
 /* 오프닝 대사 — 임시 텍스트. 배열이라 줄을 더 추가/삭제해도 그대로 순서대로 넘어감 */
 showDialogue([
-  '(임시 대사 1) ...여기가 어디지?',
-  '(임시 대사 2) 분명 야자 시간에 잠깐 졸았던 것 같은데.',
-  '(임시 대사 3) 왜 이렇게 조용하지... 일단 나가봐야겠다.'
+  '이런 내가 잠들었었나?',
+  '시간이 몇 시지... 휴대폰이 사라졌잖아?',
+  '...일단 나가봐야겠다.'
 ]);

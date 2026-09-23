@@ -280,6 +280,13 @@
     text-shadow:0 0 10px rgba(111,195,255,0.6); background:rgba(10,13,20,0.75);
     padding:6px 16px; border-radius:20px; border:1px solid rgba(111,195,255,0.3);
   }
+
+  /* ---------- 시작 시 "눈을 뜨는" 연출 — 화면을 까맣게 덮어뒀다가 서서히 밝아짐 ---------- */
+  #wakeOverlay{
+    position:fixed; inset:0; background:#000; z-index:200;
+    opacity:1; pointer-events:none; transition:opacity 2.4s ease;
+  }
+  #wakeOverlay.hide{ opacity:0; }
   .choice-prompt{ font-size:1rem; line-height:1.75; color:#e8edf3; margin:0 0 16px; }
 
   /* ---------- 로그인 폼 (인포데스크 컴퓨터) ---------- */
@@ -403,6 +410,8 @@
   <div class="item-popup-icon" id="itemPopupIcon"></div>
   <div class="item-popup-name" id="itemPopupName"></div>
 </div>
+
+<div id="wakeOverlay"></div>
 
 <script src="draw.js"></script>
 <script src="data.js"></script>

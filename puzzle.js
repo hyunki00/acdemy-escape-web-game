@@ -8,6 +8,7 @@ const stageDef = (p, stage) => stage === 'followUp' ? p.followUp : p;
 const normalize = s => String(s).trim().toLowerCase().replace(/\s+/g, '');
 const confirmButton = (id, stage, extra = '') =>
   `<div class="right" ${extra}><button class="btn" onclick="submitPuzzle('${id}', '${stage}')">확인</button></div>`;
+const enterSubmits = (id, stage) => `if(event.key==='Enter') submitPuzzle('${id}', '${stage}')`;   // 입력칸에서 Enter = 확인
 const hintButton = (id, stage) =>
   `<div class="right"><button class="btn secondary" onclick="showHint('${id}', '${stage}')">힌트</button></div>`;
 
@@ -30,8 +31,8 @@ const PUZZLE_TYPES = {
   /* ID/PW 로그인 (ID는 미리 채워둠) */
   login: {
     render: (def, id, stage, done) => done ? '' : `<div class="login-form">
-      <input type="text" id="loginId" value="${def.idAnswer}" placeholder="ID">
-      <input type="password" id="loginPw" placeholder="PW">
+      <input type="text" id="loginId" value="${def.idAnswer}" placeholder="ID" onkeydown="${enterSubmits(id, stage)}">
+      <input type="password" id="loginPw" placeholder="PW" onkeydown="${enterSubmits(id, stage)}">
       <div class="login-buttons">
         <button class="btn secondary" onclick="showHint('${id}', '${stage}')">힌트</button>
         <button class="btn" onclick="submitPuzzle('${id}', '${stage}')">로그인</button>
@@ -45,8 +46,7 @@ const PUZZLE_TYPES = {
     render: (def, id, stage, done) => {
       const code = nl2br(def.code).replace('{{blank}}', `<span class="blank-marker">${done ? def.answer : '?'}</span>`);
       return `<div class="code-box">${code}</div>` + (done ? '' : `<div class="answer-row">
-          <input id="blankInput" type="text" placeholder="빈칸에 들어갈 답"
-            onkeydown="if(event.key==='Enter') submitPuzzle('${id}', '${stage}')">
+          <input id="blankInput" type="text" placeholder="빈칸에 들어갈 답" onkeydown="${enterSubmits(id, stage)}">
           <button class="btn" onclick="submitPuzzle('${id}', '${stage}')">확인</button>
         </div>` + hintButton(id, stage));
     },
@@ -83,9 +83,10 @@ function openPuzzle(id, stage = 'main'){
     <h3>${def.title}</h3>
     <p class="sub">${def.subtext || ''}</p>
     ${type.render(def, id, stage, done)}
-    ${done ? '<p class="feedback ok">✓ 이미 확인했어요.</p>' : '<div id="puzzleFeedback" class="feedback"></div>'}
+    ${done ? '' : '<div id="puzzleFeedback" class="feedback"></div>'}
   `, type.narrow ? 'modal-narrow' : '');
   if (!done && type.init) type.init(def, id, stage);
+  lineOnce(`puzzleIntro_${id}_${stage}`, def.introLines);
 }
 
 function submitPuzzle(id, stage){

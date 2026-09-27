@@ -15,6 +15,21 @@ const OPENING_LINES = [
   '...일단 나가봐야겠다.'
 ];
 
+/* 시작 전 튜토리얼 (확인을 누르면 화면이 밝아지며 시작). sub: 들여쓴 보충 설명 */
+const TUTORIAL = {
+  title: '플레이 방법',
+  lines: [
+    { text: '화면 곳곳에 존재하는 일부 오브젝트를 클릭하여 상호작용이 가능합니다.' },
+    { text: '상호작용을 통해, 아이템 및 단서를 획득할 수 있습니다.',
+      sub: '일부 아이템은 소지품 칸에서 눌렀을 때, 상호작용이 가능합니다. 아이템을 획득하면 한 번씩 눌러보는 것을 권장드립니다.' },
+    { text: '방 안에 더 이상 상호작용할 오브젝트가 없다면 [이동] 버튼을 통해 다른 곳으로 이동하는 것을 추천드립니다.'},
+    { text: '획득한 단서들을 통해 퍼즐을 풀고 탈출하세요.'},
+    { text: '게임을 발전시키고 싶으시다면 토스은행 100054785704로 후원부탁드립니다',
+      sub: '후원해주신 분들께는 게임 내에 이름을 남기는 특전을 제공해드립니다. (닉네임/실명 가능)'
+     },
+  ]
+};
+
 /* ---------- 사운드 ----------
    게임 시스템이 쓰는 소리. 사물·퍼즐별 소리는 아래 각 데이터의 sound / completeSound / openSound에 있음 */
 const SOUND = {
@@ -30,28 +45,50 @@ const SOUND = {
 /* 특정 소리만 효과음 볼륨 대비 비율을 다르게 (예: 0.6 = 효과음 볼륨의 60%) */
 const SOUND_VOLUME = {
   'Sound/glass-break.mp3': 0.62,
-  'Sound/typing-blip.mp3': 0.6
+  'Sound/typing-blip.mp3': 0.6,
+  'Sound/breaker-success.mp3': 1.3   // 1보다 크면 더 크게 (최대치는 브라우저 한계인 100%)
 };
 
 /* ---------- 아이템 ----------
    다른 데이터에서는 아이템을 id(예: 'flashlight')로만 가리킵니다.
-   onClick: 소지품 칸을 눌렀을 때 동작 — 'note'(쪽지 보기) / 'pattern'(스마트폰 패턴 → 카메라) */
+   onClick: 소지품 칸을 눌렀을 때 동작 — 'note'(쪽지 보기) / 'pattern'(스마트폰 패턴 → 카메라)
+   desc: 소지품 칸에 마우스를 올리면 나오는 설명 (\n 줄바꿈 · [[...]] 회색 글씨 · 상태에 따라 바뀌면 함수 s => 설명)
+   pickupLines: 처음 얻었을 때 한 번만 나오는 대사 (상태에 따라 바뀌면 함수 s => 대사) */
+const PHONE_CAMERA_GUIDE = '휴대폰 아이템을 누르면 커서가 변경됩니다. 커서가 변경되고 휴대폰을 사용할 곳에 클릭하세요.';
 const ITEMS = {
-  flashlight:   { name: '손전등',   image: 'img/item-flashlight.png', desc: '아직 배터리가 조금 남아있다.' },
-  handkerchief: { name: '흰 손수건', image: 'img/item-handkerchief.png', desc: '먼지를 닦아낼 때 쓸 수 있을 것 같다.' },
-  rustykey:     { name: '녹슨 열쇠', image: 'img/item-rustykey.png', desc: '오랫동안 쓰이지 않은 듯, 녹이 슬어 있다.' },
+  flashlight:   { name: '손전등',   image: 'img/item-flashlight.png', desc: '아직 배터리가 조금 남아있다. 비출만한 게 있을까?' },
+  handkerchief: { name: '흰 손수건', image: 'img/item-handkerchief.png', desc: '무언가를 닦아낼 때 쓸 수 있을 것 같다.' },
+  rustykey: {
+    name: '녹슨 열쇠', image: 'img/item-rustykey.png', desc: '녹이 슬어 있다. 어디에 사용하는 열쇠지?',
+    pickupLines: s => s.seen.puzzleIntro_p_computer_followUp   // 뉴스 사이트 창을 본 적 있는지
+      ? [
+          '어째 불길한 예감이 들더라니...',
+          '우리 강사님이 연쇄 살인범이고 이번 목표는 내 차례였나?',
+          '그런데 뉴스 기사로는 분명 오늘 오후에 체포되었다고 했는데.',
+          '나를 노리는 함정을 설치하다가 재수없게 체포된건가.',
+          '나는 체포되기 전에 설치해둔 덫에 걸린거고... 재수가 없네.'
+        ]
+      : [
+          '우리 강사님이 범인...?',
+          '젠장, 설문조사에 사명감이 부족하다고 쓴 게 걸린건가? [[(※ 저 아니에요)]]',
+          '...지금 후회해봤자 소용없지. 이 열쇠를 쓸 곳이나 찾아보자.'
+        ]
+  },
   note: {
     name: '하얀 쪽지', image: 'img/item-note.png', onClick: 'note',
     desc: '무언가 계산식이 적혀 있다.',
     noteText: '1878+320÷5-100*10+978'
   },
   smartphone: {
-    name: '스마트폰', image: 'img/item-smartphone.png', onClick: 'pattern',
-    desc: '화면에 패턴 잠금이 걸려 있다.',
+    name: '휴대폰', image: 'img/item-smartphone.png', onClick: 'pattern',
+    desc: s => s.smartphoneUnlocked
+      ? '다른 기능은 없고... 카메라만 사용할 수 있어.\n[[' + PHONE_CAMERA_GUIDE + ']]'
+      : '화면에 패턴 잠금이 걸려 있다.',
+    pickupLines: ['휴대폰...? 내 건 아닌데.', '패턴으로 잠겨있잖아. 음... 일단 시도라도 해볼까.'],
     patternHint: '화면에 패턴 잠금이 걸려 있다.',
     patternAnswer: [3, 2, 1, 4, 7, 8, 5],   // 점 번호: 1 2 3 / 4 5 6 / 7 8 9
     hintReveal: '[97125]',
-    revealMsg: '✓ 잠금 해제! 메모장에 엘리베이터 비밀번호 힌트가 남아있다.'
+    revealMsg: '✓ 잠금 해제! 사용할 수 있는 기능은... 카메라밖에 없는 것 같다.\n[[' + PHONE_CAMERA_GUIDE + ']]'
   }
 };
 
@@ -59,7 +96,8 @@ const ITEMS = {
    type: 'blank'(빈칸) · 'login'(ID/PW) · 'info'(읽고 확인) · 'newsfeed'(기사 목록)
          · 'hold'(손수건 스크래치) · 'breakerbox'(차단기 미니게임)
    followUp: 1단계를 맞히면 이어서 열리는 2단계. 다시 열면 2단계부터 보임
-   풀었을 때: grantItem(아이템 지급) · setPower(전원 복구) · completeSound(효과음) · successMsg(문구) */
+   풀었을 때: grantItem(아이템 지급) · setPower(전원 복구) · completeSound(효과음) · successMsg(문구)
+   introLines: 그 창이 처음 열릴 때 한 번만 나오는 대사 */
 const PUZZLES = {
   p_computer: {
     title: '컴퓨터 - 로그인', type: 'login',
@@ -70,6 +108,8 @@ const PUZZLES = {
     followUp: {
       title: '뉴스 사이트', type: 'newsfeed',
       subtext: '검색 기록에 남아있던 페이지가 열린다.',
+      silentClose: true,   // 확인을 누르면 완료 문구 없이 바로 닫힘
+      introLines: ['뭐야, 이 기사는...?', 'oo아카데미의 신OO 강사... 아니겠지.'],
       articles: [
         {
           title: '[속보] ○○아카데미 강사 신○○, 수강생 살인 혐의로 체포',
@@ -120,13 +160,14 @@ const PUZZLES = {
     brokenBreakers: [0, 2, 8, 10, 15],
     hint: '차단기를 누르면 그 주변 배선만 바뀌어. 이웃한 두 차단기가 서로 반대 상태(하나는 누르고 하나는 안 누름)가 되어야 그 사이 배선이 켜지는 것 같아.',
     successMsg: '✓ 딸깍! 모든 배선에 불이 들어왔다.',
+    completeSound: 'Sound/breaker-success.mp3',
     setPower: true
   }
 };
 
 /* ---------- 잠금 (문 · 상자) ----------
    style: 'combo'면 다이얼 자물쇠, 없으면 도어락 키패드
-   reward: 열면 받는 아이템 id · requiresPower: 전원이 켜져야 시도 가능 · openSound: 열릴 때 소리 */
+   reward: 열면 받는 아이템 id · openSound: 열릴 때 소리 */
 const LOCK_TEXT = {   // 기본 문구 — 개별 잠금에 같은 이름의 필드를 넣으면 그 잠금만 바뀜
   title: '암호를 입력해주세요',
   subtext: len => `${len}자리 비밀번호를 입력하세요.`,
@@ -135,11 +176,6 @@ const LOCK_TEXT = {   // 기본 문구 — 개별 잠금에 같은 이름의 필
 };
 const LOCKS = {
   classroomDoor: { code: '20260847' },   // 첫 오리엔테이션 날짜(20260825) + 빔프로젝터의 +22
-  elevatorCall: {
-    code: '0000',   // 임시 — QR 촬영으로도 열림
-    requiresPower: true, offLine: '전원이 꺼져 있어 반응이 없다.',
-    openSound: 'Sound/elevator-ding.wav'
-  },
   studyBox: {
     code: '1920', style: 'combo', reward: 'smartphone',
     title: '자물쇠를 맞춰보자',
@@ -149,13 +185,13 @@ const LOCKS = {
   }
 };
 
-/* ---------- QR 스캔 (카메라 모드로 QR 코드를 클릭하면 열림) ---------- */
+/* ---------- QR 스캔 (카메라 모드로 QR 코드를 클릭하면 열림 → 찍으면 엘리베이터 문이 열림) ---------- */
 const QR_SCAN = {
   image: 'img/qr-scene.jpg',
   size: 520,                       // 카메라 화면 안 사진 크기(px)
   center: { x: 0.499, y: 0.618 },  // 사진 속 QR 중심 위치(사진 크기 대비 비율)
   tolerance: 18,                   // 십자선과 QR 중심 사이 허용 오차(px)
-  unlocks: 'elevatorCall',         // 성공하면 열리는 잠금
+  openSound: 'Sound/elevator-ding.wav',   // 엘리베이터 문이 열릴 때 소리
   alignedMsg: '✓ 초점이 맞았다. 셔터를 눌러 찍어보자.',
   missMsg: '초점이 안 맞는다. QR 코드를 십자선에 맞춰보자.',
   noPowerLine: '엘리베이터에 전원이 들어오지 않아서 아무 일도 일어나지 않았다.',
@@ -164,15 +200,18 @@ const QR_SCAN = {
 
 /* ---------- 방 ----------
    background: 이미지 경로, 또는 상태에 따라 바뀌면 함수 s => 경로
+   introLines: 그 방에 처음 들어왔을 때 한 번만 나오는 대사
    connections: 이동 버튼. lockId가 있으면 잠겨 있음 (introImage/introLine: 처음 누를 때 연출)
    hotspots: 클릭 영역. points는 이미지 대비 % 좌표 다각형
-     kind: 'flavor'(대사) · 'puzzle'(PUZZLES의 id) · 'lock'(LOCKS의 id, dest로 이동)
-     line: 대사 (puzzle/lock은 처음 한 번만 보여주고 창을 엶)
+     kind: 'flavor'(대사) · 'puzzle'(PUZZLES의 id) · 'lock'(LOCKS의 id, dest로 이동) · 'move'(누르면 dest로 이동)
+     line: 대사 — 여러 줄이면 배열, 상태에 따라 바뀌면 함수 s => 대사 (puzzle/lock은 처음 한 번만 보여주고 창을 엶)
      showIf: s => 조건 — 조건이 맞을 때만 클릭 영역이 생김 (같은 id를 상태별로 여러 개 둘 수 있음)
      sound: 누를 때 소리
      grantItem + lineFirst: 처음 누르면 아이템 지급 + lineFirst 대사
      withItem: { requires, setState, line, sound } — 그 아이템이 있으면 state[setState]=true + 대사
      requiresCamera + cameraLine: 카메라 모드일 때 누르면 QR 스캔 */
+const ELEVATOR_DOOR = [[39.74,0.0],[19.84,0.0],[22.6,99.91],[29.38,99.91],[34.53,92.59],[40.94,93.33],[41.46,92.5]];
+
 const ROOMS = {
   classroom: {
     name: '강의실', desc: '5강의실. 나도 모르게 잠든 건가?',
@@ -201,6 +240,12 @@ const ROOMS = {
   },
   hallwayLeft: {
     name: '복도(좌)', desc: '오늘따라 유난히 길어보이는군',
+    introLines: [
+      '강의실 문에 분명 도어락 같은 건 없었는데...',
+      '그건 그렇고 역시 아무도 없는 것 같네.',
+      '정문도 잠긴 것 같고... 어떻게 나가야 될까.',
+      '일단 인포데스크로 이동할까.'
+    ],
     connections: [
       { label: '강의실', dest: 'classroom' },
       { label: '복도(우)', dest: 'hallwayRight' },
@@ -316,15 +361,25 @@ const ROOMS = {
   elevatorFront: {
     name: '엘리베이터 앞',
     desc: s => s.power ? '전원이 복구됐다.' : '전원이 꺼져 있다.',
+    introLines: [
+      '엘리베이터를 써보...려고 했는데 전원이 나갔네.',
+      '엘리베이터 버튼도 누가 부숴놨고.',
+      '근데 뭐야, 이 수상쩍은 QR 코드는?'
+    ],
     connections: [
       { label: '복도(우)', dest: 'hallwayRight' },
       { label: '화장실', dest: 'restroom' }
     ],
-    background: s => s.unlocked.elevatorCall ? 'img/elevator-front-open.png'
+    background: s => s.elevatorOpen ? 'img/elevator-front-open.png'
                     : s.power ? 'img/elevator-front-powered.png' : 'img/elevator-front.png',
     hotspots: [
-      { kind: 'lock', id: 'elevatorCall', dest: 'elevatorInside', label: '엘리베이터 문',
-        points: [[39.74,0.0],[19.84,0.0],[22.6,99.91],[29.38,99.91],[34.53,92.59],[40.94,93.33],[41.46,92.5]] },
+      { kind: 'flavor', id: 'f_elevator', label: '엘리베이터 문', showIf: s => !s.elevatorOpen,
+        line: s => s.power
+          ? ['전원이 들어왔지만 버튼이 고장나서 호출할 수가 없어.', '...혹시 이 QR코드가?']
+          : '전원이 꺼져 있어 반응이 없다.',
+        points: ELEVATOR_DOOR },
+      { kind: 'move', id: 'm_elevator', label: '엘리베이터 타기', showIf: s => s.elevatorOpen,
+        dest: 'elevatorInside', points: ELEVATOR_DOOR },
       { kind: 'flavor', id: 'f_maroonDoor', label: '문',
         line: '굳게 닫힌 문. 손잡이를 돌려봐도 꿈쩍하지 않아.',
         sound: 'Sound/maroondoor-sfx.mp3',
@@ -357,6 +412,7 @@ function initialState(){
     unlocked: {},       // 연 잠금 { id: true }
     seen: {},           // 한 번만 나오는 대사를 이미 봤는지
     power: false,
+    elevatorOpen: false,   // QR 촬영으로 엘리베이터 문이 열림
     projectorLit: false,
     cabinetOpen: false,
     smartphoneUnlocked: false,

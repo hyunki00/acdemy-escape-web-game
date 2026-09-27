@@ -57,7 +57,8 @@ function goRoom(roomId){
     el('navOverlay').classList.remove('show');
     render();
     requestAnimationFrame(() => art.classList.remove('fade-out'));   // 다음 프레임에 페이드인
-    if (roomId === 'elevatorInside' && !state.finished) finishGame();
+    if (roomId === 'elevatorInside' && !state.finished) return finishGame();
+    lineOnce('roomIntro_' + roomId, currentRoom().introLines);
   }, 500);
 }
 
@@ -97,13 +98,14 @@ el('sceneArt').addEventListener('click', e => {
   e.stopPropagation();   // 이 클릭이 방금 연 대화를 바로 넘기지 않도록
   const hs = findHotspot(target.dataset.id);
   if (hs.kind === 'flavor') return clickFlavor(hs);
+  if (hs.kind === 'move') return goRoom(hs.dest);
   if (DEBUG_FREE_ROAM){ if (hs.kind === 'lock' && hs.dest) goRoom(hs.dest); return; }
   if (hs.kind === 'puzzle') clickPuzzle(hs);
   if (hs.kind === 'lock') clickLock(hs);
 });
 
 /* 대사를 처음 한 번만 보여준 뒤 next 실행 (두 번째부터는 바로 next) */
-function lineOnce(key, line, next){
+function lineOnce(key, line, next = () => {}){
   if (!line || state.seen[key]) return next();
   state.seen[key] = true;
   showDialogue(line, next);
@@ -112,7 +114,7 @@ function lineOnce(key, line, next){
 function clickFlavor(hs){
   playSfx(hs.sound);
   if (hs.requiresCamera){
-    return state.cameraMode ? showDialogue(hs.cameraLine, openQRScan) : showDialogue(hs.line);
+    return state.cameraMode ? showDialogue(hs.cameraLine, openQRScan) : showDialogue(valueOf(hs.line));
   }
   const w = hs.withItem;
   if (w && (state[w.setState] || hasItem(w.requires))){
@@ -125,9 +127,9 @@ function clickFlavor(hs){
   }
   if (hs.grantItem && !hasItem(hs.grantItem)){
     addInventory(hs.grantItem);
-    return showDialogue(hs.lineFirst || hs.line);
+    return showDialogue(hs.lineFirst || valueOf(hs.line));
   }
-  showDialogue(hs.line);
+  showDialogue(valueOf(hs.line));
 }
 
 function clickPuzzle(hs){
@@ -136,7 +138,5 @@ function clickPuzzle(hs){
 }
 
 function clickLock(hs){
-  const lock = LOCKS[hs.id];
-  if (lock.requiresPower && !state.power) return showDialogue(lock.offLine);
   lineOnce(hs.id, hs.line, () => openLock(hs.id, hs.dest));
 }

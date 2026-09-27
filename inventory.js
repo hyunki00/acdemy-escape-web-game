@@ -11,6 +11,7 @@ function addInventory(id){
   renderInventory();
   showItemPopup(ITEMS[id]);
   playSfx(SOUND.pickup);
+  lineOnce('pickup_' + id, valueOf(ITEMS[id].pickupLines));   // 처음 얻을 때 한 번만 나오는 대사
 }
 
 /* 칸 INVENTORY_SLOTS개를 그리고, 가진 아이템을 앞에서부터 채움 */
@@ -19,8 +20,12 @@ function renderInventory(){
     const id = state.inventory[i];
     if (!id) return '<div class="inv-item empty"></div>';
     const item = ITEMS[id];
-    const tooltip = item.desc ? `${item.name}\n${item.desc}` : item.name;
-    return `<div class="inv-item" data-item-id="${id}" data-tooltip="${escapeHtml(tooltip)}"><img src="${item.image}" alt="${item.name}"></div>`;
+    const desc = valueOf(item.desc);
+    const descHtml = desc ? `<div class="tooltip-desc">${partsHtml(lineParts(desc))}</div>` : '';
+    return `<div class="inv-item" data-item-id="${id}">
+        <img src="${item.image}" alt="${item.name}">
+        <div class="inv-tooltip"><div class="tooltip-name">${escapeHtml(item.name)}</div>${descHtml}</div>
+      </div>`;
   }).join('');
 }
 

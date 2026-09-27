@@ -82,6 +82,7 @@ function checkPattern(){
   if (!pattern.seq.length) return;
   if (pattern.seq.join() === pattern.item.patternAnswer.join()){
     state.smartphoneUnlocked = true;
+    renderInventory();   // 소지품 설명을 '잠금 해제' 버전으로
     setFeedback('patternFeedback', pattern.item.revealMsg, 'ok');
   } else {
     setFeedback('patternFeedback', '패턴이 일치하지 않는다.', 'bad');
@@ -149,8 +150,8 @@ function takeQRPhoto(){
   closeModal();
   setCameraMode(false);
   if (!state.power) return showDialogue(QR_SCAN.noPowerLine);
-  state.unlocked[QR_SCAN.unlocks] = true;
-  playSfx(LOCKS[QR_SCAN.unlocks].openSound);
+  state.elevatorOpen = true;
+  playSfx(QR_SCAN.openSound);
   render();
   showDialogue(QR_SCAN.successLine);
 }

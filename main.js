@@ -38,12 +38,17 @@ function changeVolume(key, v){
 }
 
 /* ---------- 재시작 · 엔딩 ---------- */
+/* 상태를 처음으로 되돌리고(1회용 대사 기록 포함), 화면이 어두워졌다가 첫 연출부터 다시 시작 */
 function restartGame(){
   Object.assign(state, initialState());
   setCameraMode(false);
-  renderInventory();
+  hideItemPopup();
   closeModal();
+  el('navOverlay').classList.remove('show');
+  renderInventory();
   render();
+  el('wakeOverlay').classList.remove('hide');   // 다시 검은 화면으로
+  setTimeout(wakeUp, 1200);
 }
 
 function finishGame(){
@@ -54,8 +59,26 @@ function finishGame(){
     <button class="btn" onclick="restartGame()">다시 플레이</button>`), 500);
 }
 
-/* ---------- 시작 ---------- */
+/* ---------- 시작 ----------
+   검은 화면 위에 튜토리얼 → [확인]을 누르면 눈을 뜨듯 페이드인 + 첫 대사 */
+const breakSentences = t => t.replace(/\.\s+(?!\()/g, '.<br>');   // 마침표로 끝난 문장 뒤에서 줄바꿈 (괄호 설명은 같은 줄)
+function showTutorial(){
+  el('tutorialBody').innerHTML = `<h3>${TUTORIAL.title}</h3>
+    <ul class="tutorial-list">${TUTORIAL.lines.map(l =>
+      `<li>${breakSentences(l.text)}${l.sub ? `<span class="tutorial-sub">${breakSentences(l.sub)}</span>` : ''}</li>`).join('')}</ul>
+    <div class="right"><button class="btn" onclick="startGame()">확인</button></div>`;
+}
+function startGame(){
+  el('tutorial').classList.add('hide');
+  wakeUp();
+}
+/* 눈을 뜨듯 페이드인 + 첫 대사 (처음 시작 · 다시 플레이 공통) */
+function wakeUp(){
+  el('wakeOverlay').classList.add('hide');
+  state.startTime = Date.now();   // 튜토리얼·암전 시간은 기록에서 제외
+  setTimeout(() => showDialogue(OPENING_LINES), 400);
+}
+
 renderInventory();
 render();
-setTimeout(() => el('wakeOverlay').classList.add('hide'), 400);   // 눈을 뜨는 페이드인
-showDialogue(OPENING_LINES);
+showTutorial();

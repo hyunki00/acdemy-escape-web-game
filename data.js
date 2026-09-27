@@ -1,43 +1,68 @@
 /* ===========================================================
-   data.js — 게임 데이터 계층
-   상태(state)와 정적 데이터(PUZZLES, LOCKS, ROOMS)를 정의합니다.
-   화면을 그리거나 로직을 처리하는 코드는 여기에 두지 않습니다.
+   data.js — 게임 내용 전부 (설정 · 사운드 · 아이템 · 퍼즐 · 잠금 · 방)
+   대사, 정답, 좌표, 파일 경로 등 "내용"을 바꿀 때는 이 파일만 고치면 됩니다.
+   동작(로직)은 다른 js 파일에 있습니다.
 =========================================================== */
 
-/* 테스트용 자유 이동 모드 — true면 퍼즐 클릭 무시 + 모든 문/서랍이 열린 것처럼 취급됩니다.
-   실제 플레이 테스트로 되돌리려면 false로 바꾸세요. */
-const DEBUG_FREE_ROAM = false;
+/* ---------- 설정 ---------- */
+const DEBUG_FREE_ROAM = false;   // true: 퍼즐 클릭 무시 + 잠긴 문도 그냥 통과 (테스트용)
+const INVENTORY_SLOTS = 13;      // 소지품 칸 수
+const DEFAULT_VOLUME = { bgm: 0.1, sfx: 0.78 };   // 시작 볼륨 (0~1)
 
-/* 소지품 바에 항상 미리 배열해둘 빈 칸 개수 (아이템을 주우면 순서대로 채워짐) */
-const INVENTORY_SLOTS = 13;
+const OPENING_LINES = [
+  '이런 내가 잠깐 졸았나?',
+  '너무 어두운데, 시간이... 내 휴대폰이 어디갔지?',
+  '...일단 나가봐야겠다.'
+];
 
-/* 잠금(도어락) 모달 공통 텍스트. 개별 LOCKS 항목에 같은 이름의 필드를 넣으면
-   그 잠금에서만 다른 문구로 재정의됩니다 (예: LOCKS.xxx.wrong = '...'). */
-const LOCK_TEXT = {
-  title: '암호를 입력해주세요',
-  subtext(len){ return `${len}자리 비밀번호를 입력하세요.`; },
-  wrong: '틀렸어요. 다시 시도해보세요.',
-  success: '✓ 열렸다!'
+/* ---------- 사운드 ----------
+   게임 시스템이 쓰는 소리. 사물·퍼즐별 소리는 아래 각 데이터의 sound / completeSound / openSound에 있음 */
+const SOUND = {
+  bgm:       'Sound/bgm.mp3',
+  typing:    'Sound/typing-blip.mp3',
+  walk:      'Sound/walk.mp3',
+  pickup:    'Sound/item-pickup.mp3',
+  beep:      'Sound/doorlock-beep.mp3',
+  doorOpen:  'Sound/doorlock-open.mp3',
+  doorWrong: 'Sound/doorlock-wrong.mp3',
+  shutter:   'Sound/camera-shutter.mp3'
+};
+/* 특정 소리만 효과음 볼륨 대비 비율을 다르게 (예: 0.6 = 효과음 볼륨의 60%) */
+const SOUND_VOLUME = {
+  'Sound/glass-break.mp3': 0.62,
+  'Sound/typing-blip.mp3': 0.6
 };
 
-const state = {
-  currentRoom: 'classroom',
-  inventory: [],
-  solved: {},
-  unlocked: {},
-  seenDialogue: {},
-  power: false,
-  startTime: Date.now(),
-  finished: false
+/* ---------- 아이템 ----------
+   다른 데이터에서는 아이템을 id(예: 'flashlight')로만 가리킵니다.
+   onClick: 소지품 칸을 눌렀을 때 동작 — 'note'(쪽지 보기) / 'pattern'(스마트폰 패턴 → 카메라) */
+const ITEMS = {
+  flashlight:   { name: '손전등',   image: 'img/item-flashlight.png', desc: '아직 배터리가 조금 남아있다.' },
+  handkerchief: { name: '흰 손수건', image: 'img/item-handkerchief.png', desc: '먼지를 닦아낼 때 쓸 수 있을 것 같다.' },
+  rustykey:     { name: '녹슨 열쇠', image: 'img/item-rustykey.png', desc: '오랫동안 쓰이지 않은 듯, 녹이 슬어 있다.' },
+  note: {
+    name: '하얀 쪽지', image: 'img/item-note.png', onClick: 'note',
+    desc: '무언가 계산식이 적혀 있다.',
+    noteText: '1878+320÷5-100*10+978'
+  },
+  smartphone: {
+    name: '스마트폰', image: 'img/item-smartphone.png', onClick: 'pattern',
+    desc: '화면에 패턴 잠금이 걸려 있다.',
+    patternHint: '화면에 패턴 잠금이 걸려 있다.',
+    patternAnswer: [3, 2, 1, 4, 7, 8, 5],   // 점 번호: 1 2 3 / 4 5 6 / 7 8 9
+    hintReveal: '[97125]',
+    revealMsg: '✓ 잠금 해제! 메모장에 엘리베이터 비밀번호 힌트가 남아있다.'
+  }
 };
 
-/* ---------- 퍼즐 데이터 ----------
-   answer는 문자열 하나 또는 배열([...])일 수 있습니다. 배열이면 그 중 아무거나 맞으면 정답 처리.
-   (예: i++ / i += 1 / i = i + 1 처럼 같은 의미의 다른 문법을 모두 인정할 때 사용)
-   채점 시 공백과 끝의 세미콜론은 무시하고 비교합니다 (puzzle.js의 normalizeCode 참고). */
+/* ---------- 퍼즐 ----------
+   type: 'blank'(빈칸) · 'login'(ID/PW) · 'info'(읽고 확인) · 'newsfeed'(기사 목록)
+         · 'hold'(손수건 스크래치) · 'breakerbox'(차단기 미니게임)
+   followUp: 1단계를 맞히면 이어서 열리는 2단계. 다시 열면 2단계부터 보임
+   풀었을 때: grantItem(아이템 지급) · setPower(전원 복구) · completeSound(효과음) · successMsg(문구) */
 const PUZZLES = {
   p_computer: {
-    title: '컴퓨터 - 로그인', type: 'login', flavor: true,
+    title: '컴퓨터 - 로그인', type: 'login',
     subtext: '로그인 정보를 입력하세요.',
     idAnswer: 'BYEMEDIA5G-2', pwAnswer: 'byemedia1',
     hint: 'WIFI',
@@ -62,22 +87,21 @@ const PUZZLES = {
     }
   },
   p_board: {
-    title: '낯익은 문장이다. 분명 빈칸에 들어갈 단어가...', type: 'blank', flavor: true,
+    title: '낯익은 문장이다. 분명 빈칸에 들어갈 단어가...', type: 'blank',
     subtext: '분명 내가 듣고 있는 강의명 같은데?.',
     code: '[IBM x RedHat] AI {{blank}} - AX Academy 8기',
-    answer: 'Transformation', digit: '20260847',
+    answer: 'Transformation',   // 대소문자·공백 무시하고 비교
     hint: '분명 트랜스 뭔 션이었는데...?',
     stage1SuccessMsg: '✓ 정답!',
     followUp: {
       title: '뒤이어 떠오른 창 하나', type: 'info',
       subtext: '언제더라...?',
       prompt: '[IBM x RedHat] AI Transformation - AX Academy 8기의 첫 오리엔테이션 날짜는?',
-      hint: '아까 빔프로젝터 화면에서 봤던 "+22"도 같이 떠올려보자.',
-      silentClose: true
+      silentClose: true   // 확인을 누르면 완료 문구 없이 바로 닫힘
     }
   },
   p_restroom: {
-    title: '거울에 적힌 무언가', type: 'hold', flavor: true,
+    title: '거울에 적힌 무언가', type: 'hold',
     requiresItem: 'handkerchief',
     missingItemMsg: '[뭔가가 적혀 있는데 때가 끼어서 안보여...닦을 만한 게 있으면 지울 수 있을 것 같아.]',
     prompt: '누가 범인인 것 같아?',
@@ -85,29 +109,39 @@ const PUZZLES = {
     hint: '손수건으로 뽀득뽀득 문질러서 닦아보자.',
     successMsg: '✓ 흐릿하게 적혀 있던 이름이 드러난다.',
     completeSound: 'Sound/glass-break.mp3',
-    grantItem: { id: 'rustykey', name: '녹슨 열쇠', icon: '🔑', image: 'img/item-rustykey.png' }
+    grantItem: 'rustykey'
   },
-  // 화장실 캐비닛 안 차단기함 — Lights Out 방식(차단기 16개, 전선 24개). 풀면 전원 복구.
+  // Lights Out 방식: 차단기를 누르면 이웃 배선이 토글, 모든 배선이 켜지면 완료.
+  // brokenBreakers는 체스판의 한쪽 색 칸((행+열)이 짝수)에서만 골라야 항상 풀 수 있음
   p_breaker: {
-    title: '차단기함', type: 'breakerbox', noDigit: true,
+    title: '차단기함', type: 'breakerbox',
     subtext: '차단기 버튼을 눌러서 주변 배선에 불을 켜보자. 모든 배선에 불이 들어와야 한다.',
     gridCols: 4, gridRows: 4,
-    brokenBreakers: [0, 2, 8, 10, 15], // 체스판의 한쪽 색 그룹 안에서만 골라야 항상 풀림 보장됨
+    brokenBreakers: [0, 2, 8, 10, 15],
     hint: '차단기를 누르면 그 주변 배선만 바뀌어. 이웃한 두 차단기가 서로 반대 상태(하나는 누르고 하나는 안 누름)가 되어야 그 사이 배선이 켜지는 것 같아.',
-    successMsg: '✓ 딸깍! 모든 배선에 불이 들어왔다.'
+    successMsg: '✓ 딸깍! 모든 배선에 불이 들어왔다.',
+    setPower: true
   }
 };
 
-/* ---------- 잠금(문/서랍) 데이터 ---------- */
+/* ---------- 잠금 (문 · 상자) ----------
+   style: 'combo'면 다이얼 자물쇠, 없으면 도어락 키패드
+   reward: 열면 받는 아이템 id · requiresPower: 전원이 켜져야 시도 가능 · openSound: 열릴 때 소리 */
+const LOCK_TEXT = {   // 기본 문구 — 개별 잠금에 같은 이름의 필드를 넣으면 그 잠금만 바뀜
+  title: '암호를 입력해주세요',
+  subtext: len => `${len}자리 비밀번호를 입력하세요.`,
+  wrong: '틀렸어요. 다시 시도해보세요.',
+  success: '✓ 열렸다!'
+};
 const LOCKS = {
-  classroomDoor: { require: ['p_board'], reward: null },
-  // 전원이 켜져야(requiresPower) 시도할 수 있는 문. 코드는 임시 — 실제 값으로 교체하세요.
-  elevatorCall: { code: '0000', reward: null, requiresPower: true,
-    offLine: '전원이 꺼져 있어 반응이 없다.', openSound: 'Sound/elevator-ding.wav' },
-  // 스터디룸 상자 — 회전 다이얼(콤보락) 스타일. code/문구는 전부 임시이니 나중에 실제 값으로 교체.
+  classroomDoor: { code: '20260847' },   // 첫 오리엔테이션 날짜(20260825) + 빔프로젝터의 +22
+  elevatorCall: {
+    code: '0000',   // 임시 — QR 촬영으로도 열림
+    requiresPower: true, offLine: '전원이 꺼져 있어 반응이 없다.',
+    openSound: 'Sound/elevator-ding.wav'
+  },
   studyBox: {
-    code: '7878', style: 'combo',
-    reward: { id: 'smartphone', name: '스마트폰', icon: '📱', image: 'img/item-smartphone.png' },
+    code: '1920', style: 'combo', reward: 'smartphone',
     title: '자물쇠를 맞춰보자',
     subtext: '다이얼을 돌려 숫자를 맞춰야해.',
     wrong: '맞지 않는 것 같다.',
@@ -115,19 +149,37 @@ const LOCKS = {
   }
 };
 
-/* ===========================================================
-   씬(배경) 그리기 함수들
-   각 함수는 SVG 조각을 문자열로 반환합니다.
-   data-kind / data-id / data-dest 속성이 붙은 <g>가 클릭 가능한 "사물"입니다.
-=========================================================== */
-/* ---------- 방 데이터 (배경 + 사물) ---------- */
+/* ---------- QR 스캔 (카메라 모드로 QR 코드를 클릭하면 열림) ---------- */
+const QR_SCAN = {
+  image: 'img/qr-scene.jpg',
+  size: 520,                       // 카메라 화면 안 사진 크기(px)
+  center: { x: 0.499, y: 0.618 },  // 사진 속 QR 중심 위치(사진 크기 대비 비율)
+  tolerance: 18,                   // 십자선과 QR 중심 사이 허용 오차(px)
+  unlocks: 'elevatorCall',         // 성공하면 열리는 잠금
+  alignedMsg: '✓ 초점이 맞았다. 셔터를 눌러 찍어보자.',
+  missMsg: '초점이 안 맞는다. QR 코드를 십자선에 맞춰보자.',
+  noPowerLine: '엘리베이터에 전원이 들어오지 않아서 아무 일도 일어나지 않았다.',
+  successLine: 'QR 코드를 촬영하자, 어디선가 엘리베이터 문이 열리는 소리가 들린다.'
+};
+
+/* ---------- 방 ----------
+   background: 이미지 경로, 또는 상태에 따라 바뀌면 함수 s => 경로
+   connections: 이동 버튼. lockId가 있으면 잠겨 있음 (introImage/introLine: 처음 누를 때 연출)
+   hotspots: 클릭 영역. points는 이미지 대비 % 좌표 다각형
+     kind: 'flavor'(대사) · 'puzzle'(PUZZLES의 id) · 'lock'(LOCKS의 id, dest로 이동)
+     line: 대사 (puzzle/lock은 처음 한 번만 보여주고 창을 엶)
+     showIf: s => 조건 — 조건이 맞을 때만 클릭 영역이 생김 (같은 id를 상태별로 여러 개 둘 수 있음)
+     sound: 누를 때 소리
+     grantItem + lineFirst: 처음 누르면 아이템 지급 + lineFirst 대사
+     withItem: { requires, setState, line, sound } — 그 아이템이 있으면 state[setState]=true + 대사
+     requiresCamera + cameraLine: 카메라 모드일 때 누르면 QR 스캔 */
 const ROOMS = {
   classroom: {
     name: '강의실', desc: '5강의실. 나도 모르게 잠든 건가?',
     connections: [ { label: '복도(좌)', dest: 'hallwayLeft', lockId: 'classroomDoor',
       introImage: 'img/classroom-doorlock.png',
       introLine: '뭐야, 누가 여기에다 도어락을 설치해놨지?' } ],
-    background(s){ return s.projectorLit ? 'img/classroom-lit.png' : 'img/classroom.png'; },
+    background: s => s.projectorLit ? 'img/classroom-lit.png' : 'img/classroom.png',
     hotspots: [
       { kind: 'puzzle', id: 'p_board', label: '모니터 화면',
         line: '내 모니터만 이상하게 켜져 있다. 화면에 뭔가 떠 있는데?',
@@ -135,11 +187,11 @@ const ROOMS = {
       { kind: 'flavor', id: 'f_chair', label: '의자',
         line: '누군가 앉아있던 것처럼, 의자가 살짝 돌아가 있어.',
         lineFirst: '의자 밑에 뭔가 떨어져 있다. 손전등? 아직 배터리는 남아있네.',
-        grantItem: { id: 'flashlight', name: '손전등', icon: '🔦', image: 'img/item-flashlight.png' },
+        grantItem: 'flashlight',
         points: [[82.24,67.59],[80.42,66.76],[76.51,67.13],[74.43,68.24],[72.71,70.46],[72.29,72.96],[73.18,80.28],[69.69,80.65],[70.26,82.59],[69.69,84.72],[69.32,97.04],[69.84,96.85],[70.57,83.61],[74.74,86.94],[72.97,87.87],[72.45,89.35],[72.97,99.91],[73.7,99.91],[73.12,89.81],[73.59,88.61],[74.64,88.24],[74.84,84.91],[81.56,84.44],[81.93,78.33],[83.33,70.93],[83.23,69.17]] },
       { kind: 'flavor', id: 'f_projector', label: '빔프로젝터 화면',
         line: '화면에 뭔가가 적혀져 있는 것 같아. 하지만 어두워서 보이지 않아.',
-        withItem: { requires: 'flashlight', setState: 'projectorLit', removeItem: 'flashlight',
+        withItem: { requires: 'flashlight', setState: 'projectorLit',
           line: '손전등을 비추자 어둠에 가려져 있던 글자가 드러난다.' },
         points: [[40.89,23.33],[41.56,25.46],[41.46,53.15],[59.06,53.15],[59.11,48.06],[64.11,48.06],[64.11,25.37],[64.69,23.33]] },
       { kind: 'flavor', id: 'f_ac', label: '에어컨',
@@ -167,15 +219,15 @@ const ROOMS = {
   studyroom: {
     name: '스터디룸', desc: '원래 이런 상자가 있었나?',
     connections: [ { label: '인포데스크', dest: 'frontdesk' } ],
-    background(s){ return s.unlocked.studyBox ? 'img/studyroom-box-open.png' : 'img/studyroom-box-closed.png'; },
+    background: s => s.unlocked.studyBox ? 'img/studyroom-box-open.png' : 'img/studyroom-box-closed.png',
     hotspots: [
       { kind: 'flavor', id: 'f_vase', label: '화분',
-        line: '마른 나뭇가지가 꽂힌 화분이다. 오래 돌보지 않은 듯하다.',
-        withItem: { requires: 'glasses',
-          line: '화분 뒤에 접힌 메모가 숨겨져 있다 — "오늘만 특별히, 답은 알아서 찾아봐 ㅎㅎ"',
-          grantItem: { id: 'note', name: '하얀 쪽지', icon: '📝', image: 'img/item-note.png' } },
+        line: '화분 뒤엔 별다른 게 없다.',
+        lineFirst: '마른 나뭇가지가 꽂힌 화분이다. 뒤쪽에 접힌 메모가 숨겨져 있다.',
+        grantItem: 'note',
         points: [[9.58,42.31],[9.01,55.28],[10.26,60.19],[9.58,64.54],[8.44,62.04],[8.49,54.54],[6.46,48.98],[7.66,55.0],[7.66,62.78],[9.69,70.28],[9.64,72.59],[8.07,73.8],[8.44,75.37],[7.45,84.07],[8.65,93.61],[11.25,94.07],[12.5,91.67],[13.23,81.39],[12.14,75.37],[12.45,73.7],[11.04,72.41],[13.39,62.69],[15.31,60.65],[15.73,57.13],[14.58,60.19],[13.12,60.93],[12.92,57.78],[14.06,54.91],[14.27,51.11],[13.44,51.76],[12.08,58.52],[10.89,57.13],[9.74,52.78]] },
       { kind: 'flavor', id: 'f_studySign', label: '스터디룸 팻말',
+        showIf: s => !s.unlocked.studyBox,
         line: '"스터디룸 STUDY ROOM" — 문 옆에 붙은 팻말이다.',
         points: [[73.28,5.28],[73.28,24.35],[84.06,24.35],[83.96,5.28]] },
       { kind: 'lock', id: 'studyBox', label: '상자',
@@ -191,10 +243,8 @@ const ROOMS = {
   restroom: {
     name: '화장실', desc: '평소보다 서늘하다.',
     connections: [ { label: '엘리베이터 앞', dest: 'elevatorFront' } ],
-    background(s){
-      if (s.cabinetOpen) return 'img/restroom-breaker-open.png';
-      return s.solved.p_restroom ? 'img/restroom-broken.png' : 'img/restroom.png';
-    },
+    background: s => s.cabinetOpen ? 'img/restroom-breaker-open.png'
+                    : s.solved.p_restroom ? 'img/restroom-broken.png' : 'img/restroom.png',
     hotspots: [
       { kind: 'puzzle', id: 'p_restroom', label: '거울',
         showIf: s => !s.solved.p_restroom,
@@ -208,10 +258,10 @@ const ROOMS = {
         showIf: s => !s.solved.p_restroom,
         line: '작은 벽면 캐비닛이다. 손잡이를 당겨봐도 잠겨서 열리지 않아.',
         points: [[63.59,44.07],[63.54,53.61],[64.95,53.89],[67.86,53.7],[67.97,52.69],[67.92,44.07]] },
-      { kind: 'flavor', id: 'f_cabinet', label: '벽면 캐비닛',
+      { kind: 'flavor', id: 'f_cabinet', label: '벽면 캐비닛',   // 거울이 깨진 뒤 배경에 맞춘 좌표
         showIf: s => s.solved.p_restroom && !s.cabinetOpen,
         line: '작은 벽면 캐비닛이다. 손잡이를 당겨봐도 잠겨서 열리지 않아.',
-        withItem: { requires: 'rustykey', removeItem: 'rustykey', setState: 'cabinetOpen', sound: 'Sound/cabinet-sfx.mp3',
+        withItem: { requires: 'rustykey', setState: 'cabinetOpen', sound: 'Sound/cabinet-sfx.mp3',
           line: '녹슨 열쇠를 넣고 돌리자 캐비닛이 열렸다. 안에 낡은 차단기함이 보인다.' },
         points: [[63.96,44.07],[63.85,44.44],[63.91,53.8],[64.17,53.98],[68.28,53.8],[68.39,53.61],[68.44,49.91],[68.39,44.17],[68.23,43.98]] },
       { kind: 'puzzle', id: 'p_breaker', label: '차단기함',
@@ -259,18 +309,19 @@ const ROOMS = {
       { kind: 'flavor', id: 'f_deskChair', label: '의자',
         line: '의자 하나가 카운터에서 살짝 빠져나와 있다.',
         lineFirst: '의자 아래 손수건이 떨어져 있다. 뭔가를 닦을 수 있을지도.',
-        grantItem: { id: 'handkerchief', name: '흰 손수건', icon: '🤍', image: 'img/item-handkerchief.png' },
+        grantItem: 'handkerchief',
         points: [[40.73,61.11],[41.88,70.83],[42.66,72.41],[44.11,72.96],[44.64,74.07],[44.58,78.61],[42.5,79.63],[42.24,81.02],[42.81,81.76],[44.06,82.13],[47.4,81.67],[47.76,80.93],[47.55,79.72],[45.42,78.61],[45.42,73.61],[45.78,72.87],[48.91,71.94],[49.11,70.37],[48.44,69.44],[48.23,67.69],[47.86,66.94],[45.57,66.85],[44.84,65.09],[43.75,64.72],[42.81,61.85]] }
     ]
   },
   elevatorFront: {
     name: '엘리베이터 앞',
-    desc(s){ return s.power ? '전원이 복구됐다.' : '전원이 꺼져 있다.'; },
+    desc: s => s.power ? '전원이 복구됐다.' : '전원이 꺼져 있다.',
     connections: [
       { label: '복도(우)', dest: 'hallwayRight' },
       { label: '화장실', dest: 'restroom' }
     ],
-    background(s){ return s.power ? 'img/elevator-front-powered.png' : 'img/elevator-front.png'; },
+    background: s => s.unlocked.elevatorCall ? 'img/elevator-front-open.png'
+                    : s.power ? 'img/elevator-front-powered.png' : 'img/elevator-front.png',
     hotspots: [
       { kind: 'lock', id: 'elevatorCall', dest: 'elevatorInside', label: '엘리베이터 문',
         points: [[39.74,0.0],[19.84,0.0],[22.6,99.91],[29.38,99.91],[34.53,92.59],[40.94,93.33],[41.46,92.5]] },
@@ -280,7 +331,12 @@ const ROOMS = {
         points: [[47.92,18.8],[48.7,80.19],[49.17,79.44],[49.22,74.35],[53.75,67.69],[56.2,67.59],[55.78,23.61]] },
       { kind: 'flavor', id: 'f_waterCooler', label: '정수기',
         line: '전원이 나가 정수기 표시등도 꺼져 있다.',
-        points: [[72.6,41.11],[71.46,42.87],[71.15,50.19],[71.93,51.3],[72.08,54.63],[71.2,55.09],[70.99,56.02],[71.2,72.13],[72.4,73.7],[76.98,73.89],[78.07,74.44],[78.8,72.5],[78.85,66.11],[79.58,65.74],[79.43,64.44],[78.96,63.89],[79.27,53.06],[78.85,51.48],[79.95,50.28],[80.1,40.74],[79.27,40.0],[76.56,40.0],[75.83,41.2]] }
+        points: [[72.6,41.11],[71.46,42.87],[71.15,50.19],[71.93,51.3],[72.08,54.63],[71.2,55.09],[70.99,56.02],[71.2,72.13],[72.4,73.7],[76.98,73.89],[78.07,74.44],[78.8,72.5],[78.85,66.11],[79.58,65.74],[79.43,64.44],[78.96,63.89],[79.27,53.06],[78.85,51.48],[79.95,50.28],[80.1,40.74],[79.27,40.0],[76.56,40.0],[75.83,41.2]] },
+      { kind: 'flavor', id: 'f_qrCode', label: 'QR 코드',
+        line: '누군가 벽에 QR 코드를 붙여놨다. 낯선 코드다. 휴대폰 카메라가 있으면 찍어볼 수 있을 것 같은데.',
+        requiresCamera: true,
+        cameraLine: '카메라로 QR 코드를 찍어보자.',
+        points: [[45.0,52.04],[44.43,52.04],[43.85,52.41],[43.07,52.59],[42.97,52.78],[42.29,52.78],[42.03,53.06],[41.56,53.15],[41.56,54.35],[41.46,54.44],[41.41,55.0],[41.61,57.96],[41.67,61.94],[45.05,59.81]] }
     ]
   },
   elevatorInside: {
@@ -291,14 +347,22 @@ const ROOMS = {
   }
 };
 
-/* ---------- 유틸 ---------- */
-function lockCode(lockId){
-  const lock = LOCKS[lockId];
-  if (lock.code) return lock.code; // 퍼즐 연계 없이 직접 코드가 정해진 잠금(예: 상자 자물쇠)
-  return lock.require.map(pid => PUZZLES[pid].digit).join('');
+/* ---------- 게임 상태 ----------
+   새 상태 값을 추가할 땐 여기에만 넣으면 됩니다 (재시작하면 자동으로 이 값으로 돌아감) */
+function initialState(){
+  return {
+    currentRoom: 'classroom',
+    inventory: [],      // 가진 아이템 id 목록
+    solved: {},         // 푼 퍼즐 { id: true }
+    unlocked: {},       // 연 잠금 { id: true }
+    seen: {},           // 한 번만 나오는 대사를 이미 봤는지
+    power: false,
+    projectorLit: false,
+    cabinetOpen: false,
+    smartphoneUnlocked: false,
+    cameraMode: false,
+    startTime: Date.now(),
+    finished: false
+  };
 }
-function lockSolved(lockId){
-  const lock = LOCKS[lockId];
-  if (!lock.require) return true;
-  return lock.require.every(pid => state.solved[pid]);
-}
+const state = initialState();

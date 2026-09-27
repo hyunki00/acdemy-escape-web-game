@@ -1,127 +1,61 @@
 /* ===========================================================
-   main.js — 게임 진입점
-   타이머, 설정, 초기화(재시작), 엔딩 처리 후 최초 render()를 호출합니다.
-   반드시 다른 모든 스크립트보다 나중에 로드되어야 합니다.
+   main.js — 게임 시작 · 타이머 · 설정 · 재시작 · 엔딩
+   반드시 가장 마지막에 로드되어야 합니다.
 =========================================================== */
 
-/* ---------- 배경음악(BGM) ---------- */
-const bgmAudio = document.getElementById('bgmAudio');
-bgmAudio.volume = 0.5;
-function tryPlayBgm(){
-  const p = bgmAudio.play();
-  if (p && p.catch){
-    p.catch(() => {
-      // 브라우저의 자동재생 차단 — 사용자가 처음 클릭/키 입력하는 순간 재생 시도
-      const resume = () => { bgmAudio.play().catch(() => {}); document.removeEventListener('click', resume); document.removeEventListener('keydown', resume); };
-      document.addEventListener('click', resume, { once: true });
-      document.addEventListener('keydown', resume, { once: true });
-    });
-  }
-}
-tryPlayBgm();
-
-/* ---------- 마스터 볼륨/음소거 (게임 안의 모든 <audio>에 공통 적용) ---------- */
-let masterVolume = 0.5;
-/* 효과음(BGM 제외) 전체에 적용할 기본 배율. 특정 파일만 다르게 주고 싶으면
-   SFX_VOLUME_OVERRIDES에 'Sound/파일명.mp3': 배율 형태로 추가하면 그 사운드만 재정의됨. */
-const SFX_VOLUME_MULTIPLIER = 1.3;
-const SFX_VOLUME_OVERRIDES = {
-  'Sound/glass-break.mp3': 0.8
-};
-function sfxVolumeFor(src){
-  const mult = (src && SFX_VOLUME_OVERRIDES[src] != null) ? SFX_VOLUME_OVERRIDES[src] : SFX_VOLUME_MULTIPLIER;
-  return Math.min(1, Math.max(0, masterVolume * mult));
-}
-const BGM_VOLUME_MULTIPLIER = 0.8;
-function applyVolume(v){
-  masterVolume = Number(v);
-  document.querySelectorAll('audio').forEach(el => {
-    // BGM은 자체 배율, 나머지 효과음은 SFX 배율(+개별 오버라이드) 적용
-    el.volume = (el.id === 'bgmAudio')
-      ? Math.min(1, Math.max(0, masterVolume * BGM_VOLUME_MULTIPLIER))
-      : sfxVolumeFor(el.getAttribute('src'));
-  });
-  const label = document.getElementById('volumeLabel');
-  if (label) label.textContent = Math.round(masterVolume * 100) + '%';
-}
-applyVolume(masterVolume);
+const elapsed = () => Math.floor((Date.now() - state.startTime) / 1000);
+const percent = v => Math.round(v * 100) + '%';
 
 /* ---------- 타이머 ---------- */
 setInterval(() => {
   if (state.finished) return;
-  const sec = Math.floor((Date.now() - state.startTime) / 1000);
-  const m = String(Math.floor(sec / 60)).padStart(2, '0');
-  const s = String(sec % 60).padStart(2, '0');
-  document.getElementById('timer').textContent = `${m}:${s}`;
+  const s = elapsed();
+  el('timer').textContent = String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
 }, 1000);
 
-/* ---------- 설정 모달 ---------- */
-document.getElementById('settingsBtn').addEventListener('click', () => {
-  if (dialogueBar.classList.contains('show') || imagePopup.classList.contains('show')) return;
-  openModal(`
-    <h3>설정</h3>
-    <p class="sub">배경음악·효과음 볼륨을 조절할 수 있어요</p>
-    <div style="display:flex; flex-direction:column; gap:14px;">
-      <div>
-        <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:var(--text-muted); margin-bottom:4px;">
-          <span>🔊 볼륨</span>
-          <span id="volumeLabel">${Math.round(masterVolume * 100)}%</span>
-        </div>
-        <input type="range" min="0" max="1" step="0.05" value="${masterVolume}" oninput="applyVolume(this.value)" style="width:100%;">
-      </div>
-      <button class="btn secondary" onclick="toggleMute(this)">${bgmAudio.muted ? '🔇 음소거 중 (클릭해서 켜기)' : '🔈 음소거'}</button>
+/* ---------- 설정 ---------- */
+const muteLabel = () => muted ? '🔇 음소거 중 (클릭해서 켜기)' : '🔈 음소거';
+const volumeRow = (key, label, value) => `<div>
+    <div class="volume-label"><span>${label}</span><span id="${key}VolumeLabel">${percent(value)}</span></div>
+    <input type="range" min="0" max="1" step="0.05" value="${value}" oninput="changeVolume('${key}', this.value)">
+  </div>`;
+
+el('settingsBtn').addEventListener('click', () => {
+  if (isBlocking()) return;
+  openModal(`<h3>설정</h3>
+    <p class="sub">배경음악·효과음 볼륨을 각각 따로 조절할 수 있어요</p>
+    <div class="settings-list">
+      ${volumeRow('bgm', '🎵 배경음악', bgmVolume)}
+      ${volumeRow('sfx', '🔊 효과음', sfxVolume)}
+      <button class="btn secondary" onclick="setMuted(!muted); this.textContent = muteLabel()">${muteLabel()}</button>
       <button class="btn secondary" onclick="closeModal()">힌트는 각 퍼즐 창의 '힌트' 버튼을 확인하세요</button>
       <button class="btn" onclick="restartGame()">처음부터 다시 시작</button>
-    </div>
-  `);
+    </div>`);
 });
-function toggleMute(btn){
-  const muted = !bgmAudio.muted;
-  document.querySelectorAll('audio').forEach(el => { el.muted = muted; });
-  btn.textContent = muted ? '🔇 음소거 중 (클릭해서 켜기)' : '🔈 음소거';
+function changeVolume(key, v){
+  if (key === 'bgm') setBgmVolume(v); else setSfxVolume(v);
+  el(key + 'VolumeLabel').textContent = percent(key === 'bgm' ? bgmVolume : sfxVolume);
 }
 
-/* ---------- 리셋 ---------- */
+/* ---------- 재시작 · 엔딩 ---------- */
 function restartGame(){
-  state.currentRoom = 'classroom';
-  state.inventory = [];
-  state.solved = {};
-  state.unlocked = {};
-  state.seenDialogue = {};
-  state.power = false;
-  state.startTime = Date.now();
-  state.finished = false;
-  renderInventorySlots();
+  Object.assign(state, initialState());
+  setCameraMode(false);
+  renderInventory();
   closeModal();
   render();
 }
 
-/* ---------- 엔딩 ---------- */
 function finishGame(){
   state.finished = true;
-  const sec = Math.floor((Date.now() - state.startTime) / 1000);
-  const m = Math.floor(sec / 60), s = sec % 60;
-  setTimeout(() => {
-    openModal(`
-      <h3>학원을 탈출했다 🎉</h3>
-      <p class="sub">총 소요 시간: ${m}분 ${s}초</p>
-      <button class="btn" onclick="restartGame()">다시 플레이</button>
-    `);
-  }, 500);
+  const s = elapsed();
+  setTimeout(() => openModal(`<h3>학원을 탈출했다 🎉</h3>
+    <p class="sub">총 소요 시간: ${Math.floor(s / 60)}분 ${s % 60}초</p>
+    <button class="btn" onclick="restartGame()">다시 플레이</button>`), 500);
 }
 
 /* ---------- 시작 ---------- */
-renderInventorySlots();
+renderInventory();
 render();
-
-/* 잠들었다 눈을 뜨는 연출 — 화면이 까맣게 덮여있다가 잠깐 뒤 서서히 밝아짐 */
-setTimeout(() => {
-  document.getElementById('wakeOverlay').classList.add('hide');
-}, 400);
-
-/* 오프닝 대사 — 임시 텍스트. 배열이라 줄을 더 추가/삭제해도 그대로 순서대로 넘어감 */
-showDialogue([
-  '이런 내가 잠들었었나?',
-  '시간이 몇 시지... 휴대폰이 사라졌잖아?',
-  '...일단 나가봐야겠다.'
-]);
+setTimeout(() => el('wakeOverlay').classList.add('hide'), 400);   // 눈을 뜨는 페이드인
+showDialogue(OPENING_LINES);

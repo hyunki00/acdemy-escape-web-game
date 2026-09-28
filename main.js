@@ -43,6 +43,7 @@ function restartGame(){
   Object.assign(state, initialState());
   setCameraMode(false);
   hideItemPopup();
+  stopEndingVideo();
   closeModal();
   el('navOverlay').classList.remove('show');
   renderInventory();
@@ -51,12 +52,31 @@ function restartGame(){
   setTimeout(wakeUp, 1200);
 }
 
+/* 엘리베이터에 타면: 기록 확정 → 엔딩 영상 재생 → 영상이 끝나면 마지막 장면 위에 탈출 성공 창 */
 function finishGame(){
   state.finished = true;
   const s = elapsed();
-  setTimeout(() => openModal(`<h3>학원을 탈출했다 🎉</h3>
+  let shown = false;
+  const showResult = () => !shown && (shown = true) && openModal(`<h3>${ENDING.title}</h3>
     <p class="sub">총 소요 시간: ${Math.floor(s / 60)}분 ${s % 60}초</p>
-    <button class="btn" onclick="restartGame()">다시 플레이</button>`), 500);
+    <button class="btn" onclick="restartGame()">다시 플레이</button>`);
+
+  const video = el('endingVideo');
+  video.src = ENDING.video;
+  video.volume = sfxVolume;
+  video.muted = muted;
+  video.onended = showResult;
+  video.onerror = showResult;   // 영상 파일을 못 찾으면 바로 결과 창
+  video.classList.add('show');
+  video.play().catch(showResult);
+}
+function stopEndingVideo(){
+  const video = el('endingVideo');
+  video.onended = video.onerror = null;
+  video.pause();
+  video.removeAttribute('src');
+  video.load();
+  video.classList.remove('show');
 }
 
 /* ---------- 시작 ----------

@@ -97,6 +97,10 @@ el('sceneArt').addEventListener('click', e => {
   if (!target) return;
   e.stopPropagation();   // 이 클릭이 방금 연 대화를 바로 넘기지 않도록
   const hs = findHotspot(target.dataset.id);
+  if (state.cameraMode && !hs.requiresCamera){   // 휴대폰 커서일 땐 원래 반응 대신 안내 대사 + 원래 커서로
+    setCameraMode(false);
+    return showDialogue(QR_SCAN.wrongTargetLine);
+  }
   if (hs.kind === 'flavor') return clickFlavor(hs);
   if (hs.kind === 'move') return goRoom(hs.dest);
   if (DEBUG_FREE_ROAM){ if (hs.kind === 'lock' && hs.dest) goRoom(hs.dest); return; }

@@ -11,7 +11,7 @@ const ITEM_ACTIONS = {
 /* ---------- 쪽지 (읽기 전용) ---------- */
 function openItemNote(item){
   openModal(`<h3>${item.name}</h3>
-    <p class="sub note-text">${escapeHtml(item.noteText)}</p>`, 'modal-narrow');
+    <p class="sub note-text">${partsHtml(lineParts(item.noteText))}</p>`, 'modal-narrow');
 }
 
 /* ---------- 스마트폰 패턴 잠금 (점 1~9: 1 2 3 / 4 5 6 / 7 8 9) ---------- */

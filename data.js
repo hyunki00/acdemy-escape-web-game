@@ -76,8 +76,8 @@ const ITEMS = {
   },
   note: {
     name: '하얀 쪽지', image: 'img/item-note.png', onClick: 'note',
-    desc: '무언가 계산식이 적혀 있다.',
-    noteText: '1878+320÷5-100*10+978'
+    desc: '이상한 곱셈식이 적혀 있다.',
+    noteText: '물음표에 들어갈 것은?\n\n11 × 11 = 4\n22 × 22 = 16\n33 × 33 = 18\n44 × 44 = ?\n\n[[그냥 곱하면 답이 안 나와. 곱한 결과를 한 번 더 봐.]]'   // [[...]] = 회색 힌트 · 정답 19 = 상자 자물쇠 번호
   },
   smartphone: {
     name: '휴대폰', image: 'img/item-smartphone.png', onClick: 'pattern',
@@ -177,7 +177,7 @@ const LOCK_TEXT = {   // 기본 문구 — 개별 잠금에 같은 이름의 필
 const LOCKS = {
   classroomDoor: { code: '20260847' },   // 첫 오리엔테이션 날짜(20260825) + 빔프로젝터의 +22
   studyBox: {
-    code: '1920', style: 'combo', reward: 'smartphone',
+    code: '19', style: 'combo', reward: 'smartphone',   // 쪽지 정답 (44×44=1936 → 1+9+3+6)
     title: '자물쇠를 맞춰보자',
     subtext: '다이얼을 돌려 숫자를 맞춰야해.',
     wrong: '맞지 않는 것 같다.',

@@ -7,7 +7,7 @@
 /* ---------- 설정 ---------- */
 const DEBUG_FREE_ROAM = false;   // true: 퍼즐 클릭 무시 + 잠긴 문도 그냥 통과 (테스트용)
 const INVENTORY_SLOTS = 13;      // 소지품 칸 수
-const DEFAULT_VOLUME = { bgm: 0.1, sfx: 0.78 };   // 시작 볼륨 (0~1)
+const DEFAULT_VOLUME = { bgm: 0.25, sfx: 0.85 };   // 시작 볼륨 (0~1)
 
 const OPENING_LINES = [
   '이런 내가 잠깐 졸았나?',
